@@ -1,0 +1,121 @@
+mod rough;
+
+use std::{collections::HashMap, sync::Arc, thread};
+
+use actix_multipart::{
+    form::{
+        tempfile::{TempFile, TempFileConfig},
+        MultipartForm, json::Json, text::Text,
+    },
+    Multipart,
+};
+use actix_web::{middleware, web, App, Error, HttpResponse, HttpServer, Responder, rt::spawn};
+use futures_util::TryStreamExt as _;
+use uuid::Uuid;
+use serde::{Serialize, Deserialize};
+
+
+#[derive(Debug, MultipartForm)]
+struct UploadForm {
+    #[multipart(rename = "file")]
+    files: Vec<TempFile>,
+    #[multipart(rename="query")]
+    query: Text<JsonQuery>,
+    
+}
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+enum JsonQuery {
+    TitleData(HashMap<String, Vec<String>>),
+    OnlyData(Vec<String>),
+    None
+}
+
+
+
+async fn calculate(
+    MultipartForm(form): MultipartForm<UploadForm>,
+) -> Result<impl Responder, Error> {
+
+    const THREADS: usize = 200;
+    let mut handles = vec![];
+    let file_queries = Arc::new(form.query.0);
+    //println!("{:?}", file_queries);
+    let ex_count = form.files.len();
+    let files = Arc::new(form.files);
+
+    let mut start = 0;
+    let gap = ex_count/THREADS;
+
+    // spawn many threads
+    for t in 0..THREADS {
+        let end = if t != ex_count-1 {start + gap} else {start + gap + ex_count%THREADS};
+        let files = Arc::clone(&files);
+        // for each thread
+        let handle = thread::spawn(move || {
+
+            // each thread should search its list of files for the responsible coloms
+            'internal_thread_loop: for s in start..end { 
+                let file = &files[s].file;
+                let name = &files[s].file_name;
+                
+                println!("{:?}", name);
+            }
+        });
+
+
+        handles.push(handle);
+        start = end;
+
+
+        //let file = calamine::open_workbook_auto_from_rs(&f.file).expect("msg");
+        
+    }
+
+    for x in handles {
+        let _ = x.join();
+    }
+
+    Ok(HttpResponse::Ok())
+}
+
+
+async fn index() -> HttpResponse {
+    let html = r#"<html>
+        <head><title>Upload Test</title></head>
+        <body>
+            <form target="/" method="post" enctype="multipart/form-data">
+                <input type="file" multiple name="file"/>
+                <button type="submit">Submit</button>
+            </form>
+        </body>
+    </html>"#;
+
+    HttpResponse::Ok().body(html)
+}
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+
+    log::info!("creating temporary upload directory");
+    
+
+    log::info!("starting HTTP server at http://localhost:8080");
+
+    HttpServer::new(|| {
+        App::new()
+            .wrap(middleware::Logger::default())
+            .app_data(TempFileConfig::default().directory("./tmp"))
+            .service(
+                web::resource("/")
+                    .route(web::get().to(index))
+                    .route(web::post().to(calculate)),
+            )
+    })
+    .bind(("127.0.0.1", 8080))?
+    .workers(2)
+    .run()
+    .await
+}
