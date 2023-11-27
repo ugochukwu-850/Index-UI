@@ -1,5 +1,5 @@
 use calamine::{self, open_workbook_auto_from_rs, DataType, Reader, Sheets};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{BufRead, BufWriter};
 use std::path::PathBuf;
@@ -85,7 +85,7 @@ pub(crate) fn r_main() {
     let started = Instant::now();
     const THREADS: usize = 200;
     let files = Arc::new(generate_files(100000, THREADS, None));
-   /*println!(
+    /*println!(
         "Got all {} files in {}",
         files.len(),
         (Instant::now() - started).as_secs_f32()
@@ -110,12 +110,12 @@ pub(crate) fn r_main() {
         let handle = thread::spawn(move || {
             // each thread should search its list of files for the responsible coloms
             'internal_thread_loop: for s in start..end {
-               /*println!(
+                /*println!(
                     "Matrix: ({}, {}), datum: {}",
                     t,
                     s,
                     files[s].metadata().unwrap().is_file()
-                )*/;
+                )*/
 
                 // convert file to sheet type and use key tags to search the data
                 let file = &files[s];
@@ -152,7 +152,7 @@ fn r1_test() {
 
 fn change_to_sheets() {}
 
-pub fn search_for_td(excel: &mut Sheets<&File>, query: HashMap<String, Vec<String>>) {
+pub fn search_for_td(excel: &mut Sheets<&File>, query: HashMap<String, HashSet<String>>) {
     // create a mutable ownership of excel_sheet
     // if the workbook has the work_sheet first file
     if let Some(Ok(excel_workbook)) = excel.worksheet_range(excel.sheet_names()[0].as_str()) {
@@ -162,9 +162,8 @@ pub fn search_for_td(excel: &mut Sheets<&File>, query: HashMap<String, Vec<Strin
         let mut data: HashMap<(usize, usize), Vec<String>> = HashMap::new();
 
         // loop through all cells
-        for (index, (row_index, col_index, cell_data)) in excel_workbook.used_cells().enumerate() {
+        for (row_index, col_index, cell_data) in excel_workbook.used_cells() {
             // get all the titles into the titles map filtering the non queried
-            let x = &cell_data.to_string();
             if row_index == 0 && query.contains_key(cell_data.to_string().as_str()) {
                 //println!("running now");
                 titles.insert((row_index, col_index), cell_data.to_string());
@@ -173,7 +172,6 @@ pub fn search_for_td(excel: &mut Sheets<&File>, query: HashMap<String, Vec<Strin
 
             // NOT TITLE and is in same coloum as one of the titles and that titles data queries includes it
             if titles.contains_key(&(0, col_index)) {
-                //println!("Found title for {}", cell_data.to_string());
                 let title = titles.get(&(0, col_index)).unwrap().to_owned();
                 let cell_data = cell_data.to_string();
 
@@ -194,15 +192,40 @@ pub fn search_for_td(excel: &mut Sheets<&File>, query: HashMap<String, Vec<Strin
 
         for (key, value) in &data {
             let key_title = titles.get(&key).unwrap();
-           //println!("Key : {key_title} : Data => {value:?}");
+            //println!("Key : {key_title} : Data => {value:?}");
             compr.insert(titles.get(&key).unwrap(), value);
         }
-        
-        
     }
 }
 
-pub fn search_for_d(excel: &mut Sheets<&File>, query: Vec<String>) {
+pub fn search_for_d_x(excel: &mut Sheets<&File>, query: HashSet<String>) {
+    if let Some(Ok(excel_workbook)) = excel.worksheet_range(excel.sheet_names()[0].as_str()) {
+        // create a map for titles matrix location and cell data
+        let mut processed_data: HashMap<String, Vec<String>> = HashMap::new();
+
+        // loop through all cells using a iterator
+        let count = excel_workbook
+            .used_cells()
+            .map(|(row_index, col_index, cell_data)| {
+                if query.contains(&cell_data.to_string()) && row_index != 0 {
+                    //println!("Found cell data for {}", cell_data.to_string());
+
+                    // if infact this celldata has a real title
+                    if let Some(title) = excel_workbook.get_value((0, col_index as u32)) {
+                        if !title.is_empty() {
+                            processed_data
+                                .entry(title.to_string())
+                                .and_modify(|e| e.push(cell_data.to_string()))
+                                .or_insert(vec![cell_data.to_string()]);
+                        }
+                    }
+                }
+            })
+            .count();
+    }
+}
+
+pub fn search_for_d(excel: &mut Sheets<&File>, query: HashSet<String>) {
     // create a mutable ownership of excel_sheet
     // if the workbook has the work_sheet first file
     if let Some(Ok(excel_workbook)) = excel.worksheet_range(excel.sheet_names()[0].as_str()) {
@@ -210,11 +233,11 @@ pub fn search_for_d(excel: &mut Sheets<&File>, query: Vec<String>) {
         let mut processed_data: HashMap<String, Vec<String>> = HashMap::new();
 
         // loop through all cells
-        for (index, (row_index, col_index, cell_data)) in excel_workbook.used_cells().enumerate() {
+        for (row_index, col_index, cell_data) in excel_workbook.used_cells() {
             // get all the titles into the titles map filtering the non queried
 
             // NOT TITLE and is in same coloum as one of the titles and that titles data queries includes it
-            if query.contains(&cell_data.to_string()) && row_index != 0{
+            if query.contains(&cell_data.to_string()) && row_index != 0 {
                 //println!("Found cell data for {}", cell_data.to_string());
 
                 // if infact this celldata has a real title
@@ -229,14 +252,14 @@ pub fn search_for_d(excel: &mut Sheets<&File>, query: Vec<String>) {
             }
         }
 
-        for x in processed_data {
-           //println!("Key: {} :  Data => {:?}", x.0, x.1);
-        }
+        //for x in processed_data {
+        //println!("Key: {} :  Data => {:?}", x.0, x.1);
+        //}
     }
 }
 
 pub fn search_test(data: &mut Sheets<&File>) {
-   //let mut data = data;
+    //let mut data = data;
     let cursor = data
         .worksheet_range(data.sheet_names()[0].as_str())
         .unwrap()
@@ -244,11 +267,11 @@ pub fn search_test(data: &mut Sheets<&File>) {
     let mut query = HashMap::new();
     query.insert(
         cursor.get((0, 0)).unwrap().to_string(),
-        vec![cursor.get((1, 0)).unwrap().to_string()],
+        HashSet::from([cursor.get((1, 0)).unwrap().to_string()]),
     );
     query.insert(
         cursor.get((0, 1)).unwrap().to_string(),
-        vec![cursor.get((1, 1)).unwrap().to_string()],
+        HashSet::from([cursor.get((1, 1)).unwrap().to_string(), "got".to_string()]),
     );
     //println!("{:?}", query);
     search_for_td(data, query);
@@ -260,10 +283,12 @@ pub fn search_test_d(data: &mut Sheets<&File>) {
         .worksheet_range(data.sheet_names()[0].as_str())
         .unwrap()
         .unwrap();
-    let query: Vec<String> = cursor.used_cells().filter(|e| {
-        e.1 % 2 == 0 && e.0 != 0
-    }).map(|f| {f.2.to_string()}).collect();
-//    let query = vec!["SSDCPU".to_string()];
+    let query: Vec<String> = cursor
+        .used_cells()
+        .filter(|e| e.1 % 2 == 0 && e.0 != 0)
+        .map(|f| f.2.to_string())
+        .collect();
+    //    let query = vec!["SSDCPU".to_string()];
     //println!("{:?}", query);
-    search_for_d(data, query);
+    search_for_d_x(data, HashSet::from_iter(query.into_iter()));
 }

@@ -7,62 +7,42 @@ use std::{
 };
 
 use calamine::open_workbook_auto_from_rs;
-
+use std::path::Path;
+use std::sync::Mutex;
 mod rough;
+use rayon::*;
 
 fn main() {
     let start_time = Instant::now();
-    println!("Running search_test");
-    let dir_path = "/home/ugochukwu/Documents/one/assets";
-    let paths = match fs::read_dir(dir_path) {
-        Ok(e) => e
-            .filter(|f| {
-                if let Ok(r) = f {
-                    println!(
-                        "Found paths: {:?}",
-                        r.path().canonicalize().unwrap().extension()
-                    );
-                    r.path().extension().unwrap() == "xlsx"
-                } else {
-                    false
-                }
-            })
-            .map(|f| f.unwrap().path())
-            .collect::<Vec<PathBuf>>(),
-        Err(e) => {
-            panic!("Failed to open file")
-        }
-    };
-
-    const THREADS: usize = 200;
     let mut handles = vec![];
-    let paths = Arc::new(paths);
-    //println!("{:?}", file_queries);
-    //let ex_count = 10000;
+    //let paths = Arc::new(paths);
+    let counter = Arc::new(Mutex::new(0 as i32));
 
-    //let mut start = 0;
-    //let gap = ex_count/THREADS;
 
     // spawn many threads
-    for t in 0..30 {
+    for t in 0..40 {
         //let end = if t != ex_count-1 {start + gap} else {start + gap + ex_count%THREADS};
 
-        let paths = Arc::clone(&paths);
+        //let paths = Arc::clone(&paths);
+        let counter = Arc::clone(&counter);
         // for each thread
         let handle = thread::spawn(move || {
             // each thread should search its list of files for the responsible coloms
 
-            for path in &*paths {
-                let files = &File::open(path).unwrap();
-                let mut data = open_workbook_auto_from_rs(files).expect("msg");
-                //println!("Search for td : Thread #{}", t);
-                //rough::search_test(&path, &mut data);
-
-                for s in 0..15 {
-                    //println!("Thread # {} inner: {}",t, s);
-                    rough::search_test(&mut data);
-                }
-            }
+            //for path in &*paths {
+            let path = Path::new("/home/ugochukwu/Documents/one/assets/sample_data1.xlsx");
+            let files = &File::open(path).unwrap();
+            let mut data = open_workbook_auto_from_rs(files).expect("msg");
+            let counter = Arc::clone(&counter);
+            //println!("Search for td : Thread #{}", t);
+            //rough::search_test(&path, &mut data);
+            //for s in 0..1000 {
+                //println!("Thread # {} inner: {}",t, s);
+                let mut num = counter.lock().unwrap();
+                *num += 1;
+                rough::search_test_d(&mut data);
+            //}
+            //}
         });
 
         handles.push(handle);
@@ -74,5 +54,15 @@ fn main() {
         let _ = x.join();
     }
 
-    println!("Finished in {}", (Instant::now() - start_time).as_secs());
+    println!(
+        "Executed {} jobs in {} seconds",
+        counter.lock().unwrap(),
+        (Instant::now() - start_time).as_micros()
+    );
 }
+
+#[macro_use]
+extern crate rocket;
+
+
+

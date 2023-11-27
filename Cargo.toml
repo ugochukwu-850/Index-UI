@@ -6,11 +6,14 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-actix-multipart = "0.6.1"
-actix-web = "4.4.0"
+#actix-multipart = "0.6.1"
+#actix-web = "4.4.0"
+rocket = { version = "0.5.0", features = ["json"] }
+rocket_dyn_templates = { version = "0.1.0", features = ["tera"] }
 calamine = { version = "0.22.1", features = ["chrono"] }
 env_logger = "0.10.1"
 futures-util = "0.3.29"
 log = "0.4.20"
 serde = { version = "1.0.193", features = ["derive"] }
 uuid = "1.6.1"
+rayon = "1.8.0"

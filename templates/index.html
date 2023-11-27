@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChaiChi EXCEL PARSER</title>
+</head>
+
+<body>
+    <section id="set_data" class="set_data">
+        <div class="set_file" id="set_files">
+            <input type="file" name="files[]" multiple accept="*.xls, *.xlsx" id="upload_button">
+            <div class="file_previews">
+                <div class="file">
+                    <div class="name"><span>File name.txt</span></div>
+                    <div class="type"><span>txt/text file</span></div>
+                    <div class="size">23kb</div>
+                </div>
+            </div>
+        </div>
+        <div class="set_query_entries">
+            <div class="query_type">
+                <div id="tdq">
+                    Title + Data Query
+                </div>
+                <div id="doq">
+                    Title + Data Query
+                </div>
+            </div>
+            <button id="create_query">+</button>
+        </div>
+    </section>
+    <section id="preview_file">
+        <div class="file_previewer">
+            <div class="stats">
+                <span>new file 11234 .eie .txt</span>
+                <span>200 matches found</span>
+                <span>80000 files searched</span>
+                <span>200s</span>
+                <span>40 errors found</span>
+                <span>File Size</span>
+                <span>Matrix: 1828374 * 827327863</span>
+                <span>Filetype: .xlsx</span>
+            </div>
+            <div class="download">
+                <button id="download_cta">
+                    Download
+                </button>
+            </div>
+        </div>
+    </section>
+</body>
+
+</html>
