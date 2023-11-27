@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>One</title>
+    <link rel="stylesheet" href="/static/main.css">
+    <script src="/static/main.js"></script>
+</head>
+<body>
+
+<!-- Manage files upload and handling -->
+<div class="query_gen">
+  <div class="upload-files">
+    <div class="row">
+      <div class="col-md-4">
+        <label class="upload-btn" for="upload_files"><span><i class="fal fa-paperclip"></i></span>Upload Files</label>
+         <input id="upload_files" type="file" multiple hidden>
+      </div>
+      <div class="col-md-8">
+        <div class="upload_files_list">
+          <ul id="filelist">
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="query_inputs">
+    <div class="top">
+      <h4>Title and Data Query</h4>
+      <input type="checkbox" name="query_type" id="control_query_type">
+      <h4>Data Only Search</h4>
+    </div>
+    <div class="query_card">
+      <input type="text" name="query_title1" id="query_title_1" class="query_title">
+      <div class="tags">
+        <input type="text" name="querytag1" id="query1tag1">
+      </div>
+      <input type="button" value="+" id="csqt">
+    </div>
+    <div class="buttom">
+      <input type="text" name="create_query_input" id="cqib">
+      <input type="button" value="+" id="pcqib">
+    </div>
+  </div>
+</div>
+</body>
+</html>

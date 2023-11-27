@@ -2,12 +2,12 @@ use calamine::{self, open_workbook_auto_from_rs, DataType, Reader, Sheets};
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{BufRead, BufWriter};
+use std::ops::Index;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 use std::{thread, vec};
-
-struct FileWrapper<'a>(&'a File);
+use rayon::{self, iter::{IntoParallelIterator, ParallelIterator}};
 fn main() {
     r_main();
 }
@@ -158,6 +158,7 @@ pub fn search_for_td(excel: &mut Sheets<&File>, query: HashMap<String, HashSet<S
     if let Some(Ok(excel_workbook)) = excel.worksheet_range(excel.sheet_names()[0].as_str()) {
         // create a map for titles matrix location and cell data
         let mut titles = HashMap::new();
+        
         // create data map for title to map
         let mut data: HashMap<(usize, usize), Vec<String>> = HashMap::new();
 
@@ -198,7 +199,7 @@ pub fn search_for_td(excel: &mut Sheets<&File>, query: HashMap<String, HashSet<S
     }
 }
 
-pub fn search_for_d_x(excel: &mut Sheets<&File>, query: HashSet<String>) {
+pub fn search_for_d_x(excel: &mut Sheets<&File>, query: HashSet<String>) -> Option<HashMap<String, Vec<String>>> {
     if let Some(Ok(excel_workbook)) = excel.worksheet_range(excel.sheet_names()[0].as_str()) {
         // create a map for titles matrix location and cell data
         let mut processed_data: HashMap<String, Vec<String>> = HashMap::new();
@@ -207,9 +208,9 @@ pub fn search_for_d_x(excel: &mut Sheets<&File>, query: HashSet<String>) {
         let count = excel_workbook
             .used_cells()
             .map(|(row_index, col_index, cell_data)| {
-                if query.contains(&cell_data.to_string()) && row_index != 0 {
+                if row_index != 0 && query.contains(&cell_data.to_string()) {
                     //println!("Found cell data for {}", cell_data.to_string());
-
+                    
                     // if infact this celldata has a real title
                     if let Some(title) = excel_workbook.get_value((0, col_index as u32)) {
                         if !title.is_empty() {
@@ -222,7 +223,10 @@ pub fn search_for_d_x(excel: &mut Sheets<&File>, query: HashSet<String>) {
                 }
             })
             .count();
-    }
+    return Some(processed_data);
+}
+
+None
 }
 
 pub fn search_for_d(excel: &mut Sheets<&File>, query: HashSet<String>) {
@@ -277,7 +281,7 @@ pub fn search_test(data: &mut Sheets<&File>) {
     search_for_td(data, query);
 }
 
-pub fn search_test_d(data: &mut Sheets<&File>) {
+pub fn search_test_d(data: &mut Sheets<&File>) -> Option<HashMap<String, Vec<String>>> {
     //let mut data = data;
     let cursor = data
         .worksheet_range(data.sheet_names()[0].as_str())
@@ -290,5 +294,5 @@ pub fn search_test_d(data: &mut Sheets<&File>) {
         .collect();
     //    let query = vec!["SSDCPU".to_string()];
     //println!("{:?}", query);
-    search_for_d_x(data, HashSet::from_iter(query.into_iter()));
+    search_for_d_x(data, HashSet::from_iter(query.into_iter()))
 }
