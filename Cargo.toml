@@ -15,5 +15,8 @@ env_logger = "0.10.1"
 futures-util = "0.3.29"
 log = "0.4.20"
 serde = { version = "1.0.193", features = ["derive"] }
-uuid = "1.6.1"
+uuid = { version = "1.6.1", features = ["v4"] }
 rayon = "1.8.0"
+serde_json = "1.0.108"
+redis = "0.23.3"
+zip = "0.6.6"

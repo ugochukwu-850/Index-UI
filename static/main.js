@@ -1,3 +1,8 @@
+//import JSZip from 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js';
+
+
+
+
 document.addEventListener('DOMContentLoaded', function() {
     // Your existing code...
 
@@ -8,16 +13,14 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('upload_files').addEventListener('change', function(e) {
         var files = e.target.files;
         var formData = new FormData();
-
         for (var i = 0; i < files.length; i++) {
             var file = files[i];
             var reader = new FileReader();
+            formData.append('files[]', file);
 
             reader.onload = (function(file, i) {
                 return function(event) {
-                    formData.append('files[]', file, file.name);
-                    formData.append("filer[]", "game chaner");
-                    alert("Added");
+                    //formData.append('files[]', file);
 
                     var li = document.createElement('li');
                     li.setAttribute('data-id', 'file-' + i++);
@@ -52,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         console.log(formData.get("files[]"));
-        alert(formData);
+        formData.append("action", JSON.stringify({"Stream": "Strings"}));
         
 
         // Add your fetch code here to send the formData to the server

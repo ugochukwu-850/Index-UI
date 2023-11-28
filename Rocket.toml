@@ -7,7 +7,7 @@ limits = { form = "64 kB", json = "1 MiB" }
 [debug]
 port = 8000
 ## only the `json` key from `default` will be overridden; `form` will remain
-limits = { json = "10MiB" }
+limits = { json = "10MiB"}
 
 ## set only when the `nyc` profile is selected
 [nyc]
@@ -18,3 +18,5 @@ port = 9001
 port = 8080
 ip_header = false
 secret_key = "1f40f0c573f98096bf780c46ee8397562420361e8bc476384c26bb4f9c9a8fef"
+
+

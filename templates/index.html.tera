@@ -17,6 +17,10 @@
         <label class="upload-btn" for="upload_files"><span><i class="fal fa-paperclip"></i></span>Upload Files</label>
          <input id="upload_files" type="file" multiple hidden>
       </div>
+      <div class="col-md-4">
+        <label class="upload-btn" for="upload_files"><span><i class="fal fa-paperclip"></i></span>Upload Files</label>
+         <input id="upload_files" type="file" multiple hidden>
+      </div>
       <div class="col-md-8">
         <div class="upload_files_list">
           <ul id="filelist">
