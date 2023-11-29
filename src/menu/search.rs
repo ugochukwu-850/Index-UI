@@ -99,12 +99,15 @@ pub fn search_for_d_x(
 }
 
 
+
+#[allow(unused)]
 /// Performs Data Only search on all `std::fs::File` file types
 /// Takes `excel: &mut Sheets<std::fs::File>` and a query type of `HashSet<String>`
 /// 
 /// Returns: `Option<HashMap<String, Vec<String>>>`
 /// This operation usually takes any where from 0.0009s to 0.001s
 /// Also uses an iter instead of conditional `for loop`
+
 pub fn search_for_d(
     excel: &mut Sheets<&File>,
     query: HashSet<String>,

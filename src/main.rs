@@ -1,6 +1,11 @@
-pub mod menu;
+pub(crate) mod menu;
+use menu::cache::del_key;
+use menu::cache::get_process;
+use menu::cache::get_stream;
+use menu::cache::key_exists;
 use menu::models::*;
 use menu::search;
+mod tests;
 
 #[macro_use]
 extern crate rocket;
@@ -26,14 +31,14 @@ fn rocket() -> _ {
     let figment = rocket::Config::figment().merge(("port", 8080)).merge((
         "limits",
         Limits::new()
-            .limit("file", 100.megabytes())
-            .limit("form", 4.megabytes())
-            .limit("data-form", 4.gibibytes()),
+            .limit("file", 5.megabytes())
+            .limit("form", 210.megabytes())
+            .limit("data-form", 220.megabytes()),
     ));
 
     rocket::custom(figment)
         .attach(Template::fairing())
-        .mount("/", routes![index, upload])
+        .mount("/", routes![index, upload, download])
         .mount("/static", FileServer::from(relative!("static")).rank(1))
 }
 
@@ -41,6 +46,41 @@ fn rocket() -> _ {
 fn index() -> Template {
     let context: HashMap<String, String> = HashMap::new();
     Template::render("index", context)
+}
+
+#[get("/download/<process_id>")]
+fn download(process_id: String) -> Json<HashMap<String , Vec<String>>> {
+    if let Ok(exists) = key_exists(&process_id) {
+        if exists {
+            if let Ok(Process {
+                total_batches,
+                mut data,
+                ..
+            }) = get_process(&process_id)
+            {
+                for x in 1..total_batches+1 {
+                    // get t he stream of that batch
+                    if let Ok(Stream {
+                        stream_data, stream_id
+                    }) = get_stream(&format!("{}@{x}", process_id))
+                    {
+                        //delete the stream id 
+                        let _ = del_key(&stream_id);
+                        data.extend(stream_data.to_owned().into_iter())
+                    }
+                }
+
+                // now compile this main file into an excel file and return
+
+                // but for this testing purpose just return the Map as string
+                //delete the key
+                let _ = del_key(&process_id);
+                return Json(data);
+
+            }
+        }
+    }
+    Json(HashMap::new())
 }
 
 #[post("/upload", data = "<upload>")]
@@ -51,9 +91,89 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
 
     // check the process action
     match action.to_owned().0 {
-        Action::CreateProcess((total_batches, file_per_batch, query)) => {
+        Action::CreateProcess((total_batches, query)) => {
             // the files must have already been unzip so just iterate through
             // create action and process first batch
+            let start = Instant::now();
+
+            // create a HashMap container
+            let data = Mutex::new(HashMap::new());
+
+            // Process based on query type
+            let _ = match query.to_owned() {
+                // If TitleData  query
+                JsonQuery::TitleData(e) => {
+                    // Iter through the files processing and updating the comp map
+                    let _ = files.into_par_iter().for_each(|f| {
+                        // if file has a path not None
+                        if let Some(path) = f.path() {
+                            // if the excel_work book could be created
+                            if let Ok(mut excel) = open_workbook_auto(path) {
+                                // if the search in the file gave a valid response
+                                if let Some(x) = search::search_for_td(&mut excel, e.to_owned()) {
+                                    // add the response to data
+                                    data.lock().unwrap().extend(x);
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // If Data Only  query
+                JsonQuery::OnlyData(e) => {
+                    // Iter through the files processing and updating the comp map
+
+                    let _ = files.into_par_iter().for_each(|f| {
+                        // if the excel_work book could be created
+
+                        if let Some(path) = f.path() {
+                            // if the search in the file gave a valid response
+
+                            if let Ok(mut excel) = open_workbook_auto(path) {
+                                if let Some(x) = search::search_for_d_x(&mut excel, e.to_owned()) {
+                                    data.lock().unwrap().extend(x);
+                                }
+                            }
+                        }
+                    });
+                }
+            };
+
+            // unlock the mutex
+            let data = data.lock().unwrap().to_owned();
+
+            // create a process instance
+            let proc_id = uuid::Uuid::new_v4().to_string();
+            let id = proc_id.to_owned();
+            let process_meta = Process {
+                total_batches,
+                proc_id,
+                data,
+            };
+
+            // if the process was successfully sent into the database
+            let _ = match menu::cache::set_process(process_meta) {
+                Ok(e) => e,
+                Err(_) => {
+                    // try again
+                    return Json(
+                        json!({"message":"failure", "code":500, "verbose12":"An internal server error has occured. Try resending request", "type": "Database Request Set Error"}),
+                    );
+                }
+            };
+
+            // add the proc data to redis cache and return json response
+            return Json(json!({
+                "message": "success",
+                "ex_time": (Instant::now() - start).as_seconds_f32(),
+                "summary": "Process have been created!!! ",
+                "proc_id": id,
+            }));
+        }
+        Action::Stream((proc_id, query, index)) => {
+            // get the process id
+
+            // get the query and search the files
             let start = Instant::now();
             let data = Mutex::new(HashMap::new());
             let _ = match query.to_owned() {
@@ -62,6 +182,7 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
                         if let Some(path) = f.path() {
                             if let Ok(mut excel) = open_workbook_auto(path) {
                                 if let Some(x) = search::search_for_td(&mut excel, e.to_owned()) {
+                                    println!("{:?}", x);
                                     data.lock().unwrap().extend(x);
                                 }
                             }
@@ -81,102 +202,13 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
                 }
             };
             let data = data.lock().unwrap().to_owned();
-            // join all the maps together
 
-            let proc_id = uuid::Uuid::new_v4().to_string();
-            let id = proc_id.to_owned();
-            let process_meta = Process {
-                total_batches,
-                total_files: total_batches * file_per_batch,
-                current_batch: 1,
-                is_complete: false,
-                query,
-                proc_id,
-                data,
+            let stream = Stream {
+                stream_id: format!("{proc_id}@{index}"),
+                stream_data: data,
             };
 
-            let _ = match menu::cache::set_process(process_meta) {
-                Ok(e) => e,
-                Err(_) => {
-                    return Json(
-                        json!({"message":"failure", "code":500, "verbose12":"An internal server error has occured. Try resending request", "type": "Database Request Set Error"}),
-                    )
-                }
-            };
-
-            // add the proc data to redis cache and return json response
-            return Json(json!({
-                "message": "success",
-                "ex_time": (Instant::now() - start).as_seconds_f32(),
-                "summary": "Process have been created!!! ",
-                "proc_id": id,
-            }));
-        }
-        Action::Stream(proc_id) => {
-            // get the process id
-            let Process {
-                total_batches,
-                total_files,
-                current_batch,
-                is_complete,
-                query,
-                proc_id,
-                data,
-            } = match menu::cache::get_process(&proc_id) {
-                Ok(e) => e,
-                Err(_) => {
-                    return Json(
-                        json!({"message":"failure", "code":500, "verbose12":"An internal server error has occured. Try resending request", "type": "Database Request Get Error"}),
-                    )
-                }
-            };
-
-            // get the query and search the files
-            let start = Instant::now();
-            let new_data = Mutex::new(HashMap::new());
-            let _ = match query.to_owned() {
-                JsonQuery::TitleData(e) => {
-                    let _ = files.into_par_iter().for_each(|f| {
-                        if let Some(path) = f.path() {
-                            if let Ok(mut excel) = open_workbook_auto(path) {
-                                if let Some(x) = search::search_for_td(&mut excel, e.to_owned()) {
-                                    new_data.lock().unwrap().extend(x);
-                                }
-                            }
-                        }
-                    });
-                }
-                JsonQuery::OnlyData(e) => {
-                    let _ = files.into_par_iter().for_each(|f| {
-                        if let Some(path) = f.path() {
-                            if let Ok(mut excel) = open_workbook_auto(path) {
-                                if let Some(x) = search::search_for_d_x(&mut excel, e.to_owned()) {
-                                    new_data.lock().unwrap().extend(x);
-                                }
-                            }
-                        }
-                    });
-                }
-            };
-            let mut new_data = new_data.lock().unwrap().to_owned();
-            new_data.extend(data.clone().into_iter());
-
-            // join all the data together and resend to db
-            let prog_process = Process {
-                total_batches,
-                total_files,
-                current_batch: current_batch + 1,
-                is_complete: if total_batches == current_batch + 1 {
-                    true
-                } else {
-                    is_complete
-                },
-                query,
-                proc_id,
-                data: new_data,
-            };
-
-            let _ = match menu::cache::set_process(prog_process) {
+            let _ = match menu::cache::set_stream(stream) {
                 Ok(e) => e,
                 Err(_) => {
                     return Json(
@@ -187,9 +219,10 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
 
             return Json(json!({
                 "message": "success",
+                "code" : 200,
                 "ex_time": (Instant::now() - start).as_seconds_f32(),
                 "summary": "Batch process completed!!! ",
-                "currentBatch": current_batch+1
+                "currentBatch": index
             }));
         }
     }
