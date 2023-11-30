@@ -3,243 +3,231 @@
 var queryType = 0;
 var formData = new FormData();
 var activeProcess = null;
+var Files = [];
+
 
 document.addEventListener('DOMContentLoaded', function () {
-    // Your existing code...
+    const SearchButton = document.querySelector("#startsearch");
+    const downloadButton = document.querySelector("#downloadButton");
+    const linkDownloadButton = document.querySelector("#downloadlink");
+
+    downloadButton.setAttribute("disabled", "");
 
     // Example:
     // var fileArray = document.getElementById('fileArray');
     // fileArray.value = JSON.stringify({});
-    document.getElementById('upload_files').addEventListener('change', function (e) {
-        var files = e.target.files;
-        var filelist = document.getElementById('filelist');
-        var total_size = 0;
-        filelist.innerHTML = "";
-        for (var i = 0; i < files.length; i++) {
-            var file = files[i];
-            var reader = new FileReader();
-            //formData.append('files[]', file);
-            total_size = total_size + file.size / 1000;
-
-            reader.onload = (function (file, i) {
-                return function (event) {
-                    //formData.append('files[]', file);
-
-                    var li = document.createElement('li');
-                    li.setAttribute('data-id', 'file-' + i++);
-
-                    var input = document.createElement('input');
-                    input.setAttribute('name', 'files[]');
-                    input.setAttribute('id', 'fileArray');
-                    input.setAttribute('type', 'hidden');
-
-                    var div = document.createElement('div');
-                    div.setAttribute('class', 'file-container');
-
-                    var div1 = document.createElement('div');
-                    div1.setAttribute('class', 'removebtn');
-                    div1.setAttribute('id', 'fileremove');
-                    div1.innerHTML = "+";
-                    var div2 = document.createElement('div');
-                    div2.setAttribute('class', 'filename');
+    document.querySelectorAll('.upload-btn-files').forEach(handler => {
+        handler.addEventListener('change', function (e) {
+            handleUploadFileS(e);
+        });
+    });
 
 
-                    div2.appendChild(document.createTextNode(file.name));
+    //only when a file has been addded allow the search
 
-                    li.appendChild(input);
-                    li.appendChild(div);
-                    li.appendChild(div1);
-                    li.appendChild(div2);
+    SearchButton.addEventListener("click", (e) => {
+        // if already in progres of another query
+        var formData = new FormData();
 
-
-                    filelist.prepend(li)
-                }
-            })(file, i);
-
-            reader.readAsDataURL(file);
+        if (!activeProcess == null) {
+            alert("There is already a running process. Please wait");
+            return;
         }
 
-        // updated the total file count
-        document.querySelector("#files_detected").textContent = `${files.length}`;
+        if (Files.length == 0) {
+            alert("Please add some files");
+            return;
+        }
 
-        total_size < 1000 ? document.querySelector("#file_size").textContent = `${total_size.toFixed(2)}Kb` : document.querySelector("#file_size").textContent = `${(total_size / 1000).toFixed(2)} Mb`;
+        // get the queries
+        let queries = parseQueries();
+        if (queries == null) {
+            alert("Please add some query data!!!");
+            return;
+        }
 
-        //only when a file has been addded allow the search
-        let search_cta = document.querySelector("#coreAction");
-        search_cta.addEventListener("click", (e) => {
-            // if already in progres of another query
-            var formData = new FormData();
+        // batch the amount of files
+        let files_batch = batchFile()
 
-            if (!activeProcess == null) {
-                alert("There is already a running process. Please wait");
-                return;
-            }
+        if (files_batch == null) {
+            alert("Batch Exceeding limits of a single file!! \n Try zipping the files");
+            return;
+        }
+        console.log(files_batch);
 
-            // get the queries
-            let queries = parseQueries();
-            if (queries == null) {
-                alert("Please add some query data!!!");
-                return;
-            }
+        let query_create_process = {
+            "CreateProcess": [files_batch.length - 1, queries]
+        }
+        console.log(query_create_process);
 
-            if (files.length < 1) {
-                alert("Please add some files");
-                return;
-            }
+        formData.append("action", JSON.stringify(query_create_process));
+        formData = add_files_to_form(formData, files_batch[0]);
+        //make the request 
 
-            // set to searching
-            document.querySelector("#cta-search").textContent = "Searching";
-            // set the icon too
+        //set to searching
+        SearchButton.textContent = "Searching";
+        SearchButton.setAttribute("disabled", "");
+        downloadButton.setAttribute("disabled", "");
+        linkDownloadButton.setAttribute("hidden", "");
+        // return;
 
-            // batch the amount of files
-            let files_batch = batchFile(files)
-
-            if (files_batch == null) {
-                alert("Batch Exceeding limits of a single file!! \n Try zipping the files");
-                return;
-            }
-            console.log(files_batch);
-
-            let query_create_process = {
-                "CreateProcess": [files_batch.length - 1, queries]
-            }
-            console.log(query_create_process);
-
-            formData.append("action", JSON.stringify(query_create_process));
-            formData = add_files_to_form(formData, files_batch[0]);
-            //make the request 
-            alert("About to start");
-            fetch('/upload', {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    // if successfull create the batch in the front end
-                    activeProcess = {
-                        "batchCount": files_batch.length - 1,
-                        "isComplete": false,
-                        "totalFiles": files.length,
-                        "proc_id": data["proc_id"]
-                    };
-
-                    //alert("The process has been created")
-                    // also update active process dom and the add the bacth Id as though
-                    // document.querySelector("#dom").textContent = 1;
-                    // document.querySelector("#dom").textContent = `Process Id: ${data["proc_id"]}`;
-
-                    // now start the batch sequence if there is 
-                    console.log("name", data);
-                    //var data = data;
-                    if (activeProcess.batchCount == 0) {
-                        // alert("completed One Time Process");
-                        // change the search button to download link
-                        let action = document.querySelector("#download");
-                        action.href = `/download/${data["proc_id"]}`;
-                        action.textContent = "Download now";
-                        action.click();
-                        console.log(activeProcess);
-                        activeProcess = null;
-                        document.querySelector("#cta-search").textContent = "Search";
-
-                    }
-                    else {
-                        // start a stream of search
-                        console.log("Attempting to start for sub stream");
-                        for (var index = 1; index < files_batch.length; index++) {
-
-                            const files = files_batch[index];
-                            let newformData = new FormData();
-                            newformData = add_files_to_form(newformData, files)
-                            newformData.append("action", JSON.stringify({
-                                "Stream": [
-                                    data["proc_id"], queries, index
-                                ]
-                            }))
-
-                            // make the request
-                            console.log("About to start for index " + index);
-                            fetch('/upload', {
-                                method: 'POST',
-                                body: newformData
-                            })
-                                .then(sec_res => sec_res.json())
-                                .then(data => {
-                                    if (data.status == 200 || true) {
-                                        activeProcess.isComplete = activeProcess.batchCount <= index ? true : false;
-                                        // do the logs 
-                                        console.log(activeProcess, data);
-
-                                        if (activeProcess.isComplete == true) {
-
-                                            let action = document.querySelector("#download");
-                                            action.href = `/download/${data["proc_id"]}`;
-                                            action.textContent = "Download now"
-                                            action.click();
-                                            console.log(activeProcess);
-                                            activeProcess = null;
-                                            document.querySelector("#cta-search").textContent = "Search";
-                                        }
-
-                                    }
-                                });
-                        }
-                    }
-                })
-                .catch(error => {
-                    alert("An errored occured whilst opening this batch");
-                    console.error('Error:', error);
-                    return;
-                    //location.reload();
-                });
-
-
-        })
-
-        // handle the search start request
-
-        //.append("action", JSON.stringify({
-        //  "Stream": [
-        //    "c1cc9ac9-a7d5-4fbc-b1f4-7a17ecfc71d7", {
-        //      "OnlyData": ["B2000008001OLIVE00KU", "100% POLYESTER PRIMEFLEX FEEL FIT, 115GSM, MAKSPEC(800228C-2_1)(61inch)", "針織布vải dệt kim knit 主料"]
-        //},
-        //1
-        //]
-        //}));
-
-
-        // Add your fetch code here to send the formData to the server
-        // Example:
-        /*
         fetch('/upload', {
             method: 'POST',
             body: formData
         })
             .then(response => response.json())
-            .then(data => console.log(data))
-            .catch(error => console.error('Error:', error));
-    });
-    
-        */
-        document.getElementById('filelist').addEventListener('click', function (e) {
-            var target = e.target;
-            if (target.classList.contains('removebtn')) {
-                target.closest('li').remove();
-                // Call your removeItem function if needed
-            }
-        });
+            .then(creationData => {
+                // if successfull create the batch in the front end
+                activeProcess = {
+                    "batchCount": files_batch.length - 1,
+                    "isComplete": false,
+                    "totalFiles": Files.length,
+                    "completedBatches": 0,
+                    "proc_id": creationData["proc_id"]
+                };
+
+                //alert("The process has been created")
+                // also update active process dom and the add the bacth Id as though
+                // document.querySelector("#dom").textContent = 1;
+                // document.querySelector("#dom").textContent = `Process Id: ${data["proc_id"]}`;
+
+                // now start the batch sequence if there is 
+                console.log("name", creationData);
+                //var data = data;
+                if (activeProcess.batchCount == 0) {
+                    // alert("completed One Time Process");
+                    // change the search button to download link
+                    downloadButton.removeAttribute("disabled");
+                    linkDownloadButton.href = `/download/${creationData["proc_id"]}`;
+                    linkDownloadButton.removeAttribute("hidden");
+                    linkDownloadButton.click();
+                    activeProcess.isComplete = true;
+                    console.log(activeProcess);
+                    activeProcess = null;
+                    SearchButton.textContent = "Search";
+                    SearchButton.removeAttribute("disabled", "");
+
+                }
+                else {
+                    // start a stream of search
+                    console.log("Attempting to start for sub stream");
+                    for (var index = 1; index < files_batch.length; index++) {
+                       
+                        const files = files_batch[index];
+                        let newformData = new FormData();
+                        newformData = add_files_to_form(newformData, files)
+                        newformData.append("action", JSON.stringify({
+                            "Stream": [
+                                creationData["proc_id"], queries, index
+                            ]
+                        }))
+
+                        // make the request
+                        console.log("About to start for index " + index);
+
+                        fetch('/upload', {
+                            method: 'POST',
+                            body: newformData
+                        })
+                            .then(sec_res => sec_res.json())
+                            .then(data => {
+                                console.log(data, index);
+                                if (data.status == 200 || true) {
+                                    activeProcess.completedBatches += 1;
+                                    activeProcess.isComplete = activeProcess.completedBatches == activeProcess.batchCount ? true : false;
+                                    
+                                    // do the logs 
+                                    console.log(activeProcess, data);
+
+                                    if (activeProcess.isComplete == true) {
+
+                                        downloadButton.removeAttribute("disabled");
+                                        linkDownloadButton.href = `/download/${data["proc_id"]}`;
+                                        linkDownloadButton.removeAttribute("hidden");
+                                        linkDownloadButton.click();
+                                        console.log(activeProcess);
+                                        SearchButton.textContent = "Search";
+                                        SearchButton.removeAttribute("disabled", "");
+                                        activeProcess = null;
+                                    };
+
+                                };
+                            })
+                            .catch(e => {
+                                console.error("Failed to request batch " + index, e);
+                                return;
+                            });
+                            
+                    }
+                }
+            })
+            .catch(error => {
+                alert("An errored occured whilst opening this batch");
+                console.error('Error:', error);
+                return;
+                //location.reload();
+            });
 
 
-
-        // Your existing code...
     })
+
 });
 
 
-// returns 
-function tdq_type(e) {
-    let x = e.isChecked();
+function handleUploadFileS(e) {
+    var files = e.target.files;
+    var filelist = document.getElementById('filelist');
+    var total_size = 0;
+    filelist.innerHTML = "";
+    for (var i = 0; i < files.length; i++) {
+        var file = files[i];
+        var reader = new FileReader();
+        //formData.append('files[]', file);
+        total_size = total_size + file.size / 1000;
+
+        reader.onload = (function (file, i) {
+            return function () {
+                //formData.append('files[]', file);
+
+                var li = document.createElement('li');
+                li.setAttribute('data-id', 'file-' + i++);
+
+                var input = document.createElement('input');
+                input.setAttribute('name', 'files[]');
+                input.setAttribute('id', 'fileArray');
+                input.setAttribute('type', 'hidden');
+
+                var div = document.createElement('div');
+                div.setAttribute('class', 'file-container');
+
+
+                var div2 = document.createElement('div');
+                div2.setAttribute('class', 'filename');
+
+
+                div2.appendChild(document.createTextNode(file.name));
+
+                li.appendChild(input);
+                li.appendChild(div);
+                li.appendChild(div2);
+
+
+                filelist.prepend(li)
+            }
+        })(file, i);
+
+        reader.readAsDataURL(file);
+    }
+
+    // updated the total file count
+    document.querySelector("#files_detected").textContent = `${files.length}`;
+
+    total_size < 1000 ? document.querySelector("#file_size").textContent = `${total_size.toFixed(2)}Kb` : document.querySelector("#file_size").textContent = `${(total_size / 1000).toFixed(2)} Mb`;
+
+    // show files added
+    Files = files;
 }
+
 
 function add_data_tag(e) {
     console.log("Added");
@@ -301,6 +289,8 @@ function switch_query_type(e) {
 
 function parseQueries() {
     var query = {};
+    var total_queries = 0;
+
     if (queryType == 0) {
         query["TitleData"] = {};
         // T+D query
@@ -323,7 +313,7 @@ function parseQueries() {
             })
             //console.log(title);
             if (title && data.length > 0) {
-
+                total_queries += 1;
                 query["TitleData"][title] = data;
                 //query["TitleData"].push(datum);
             }
@@ -350,14 +340,13 @@ function parseQueries() {
 
     }
     console.log(query);
-    return (query.OnlyData || query.TitleData) ? query : null;
+    return (query.OnlyData || total_queries > 0) ? query : null;
 }
 
 
 
-
-
-function batchFile(filelist) {
+function batchFile() {
+    let filelist = Files;
     var container = [];
     var current_list = [];
     var active_list_len = 0;
@@ -383,6 +372,7 @@ function batchFile(filelist) {
 
     }
     container.push(current_list);
+    container.push([]);
 
     return container;
 }

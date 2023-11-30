@@ -11,77 +11,57 @@
 
 <body>
   <!-- the heading and log dashboard -->
-  <div class="log-board">
-    <div class="logs">
-      <h4 class="log-header">
-        Log
-      </h4>
-      <div class="log_data">
-        <div class="log_datum">
-          <span>*</span>
-          <h6><span class="quant" id="files_detected">0</span> files Detected</h6>
-        </div>
-        <div class="log_datum">
-          <span>*</span>
-          <h6><span class="quant" id="queries_detected">1</span> queries Detected</h6>
-        </div>
-
-        <div class="log_datum">
-          <span>*</span>
-          <h6>Total file size: <span class="quant" id="file_size">0</span></h6>
-        </div>
-      </div>
+  <header class="heading-nav">
+    <div class="left">
+      <h2>Dashboard: Index-UI</h2>
+      <small>Welcome to Index-UI</small>
+    </div>
+    <div class="right">
+      <small>Aspire Theme<br>Dashboard<br> <span class="has-text-weight-bold has-text-white">v.0.1</span></small>
     </div>
 
-    <div class="process_int">
-      <div class="process_log">
-        <h4 class="lheader">
-          <span id="process_count">0</span> Active Process
-        </h4>
-        <div class="live_log">
-          <div class="log_datum">
-            <span>*</span> <span>Initiated batch process</span>
-          </div>
-          <div class="log_datum">
-            <span>*</span> <span>Started batch 1</span>
-          </div>
-          <div class="log_datum">
-            <span>*</span> <span>Completed batch 1</span>
-          </div>
 
-        </div>
-      </div>
-      <div class="action">
-        <div class="batch_id">
-          <h6 id="batch_template">Click search to start</h6>
+  </header>
+  <hr>
+  </hr>
+  <!-- The markup for logs -->
+  <div class="logs">
+    <div class="log">
+      <h4 id="files_detected">0</h4>
+      <h5>Total Files</h5>
+    </div>
+    <div class="log">
+      <h4 id="queries_detected">1</h4>
+      <h5>Total Queries</h5>
+    </div>
 
-        </div>
-        <div id="coreAction" class="cta-action">
-          <h4 id="cta-search" class="verbose">
-            SEARCH
-          </h4>
-          <span id="procees_icon">0000</span>
-        </div>
-        <a href="#" target="_blank" id="download">*</a>
+    <div class="log">
+      <h4 id="file_size">0</h4>
+      <h5>File Size</h5>
+    </div>
 
-      </div>
+    <div class="search">
+      <button id="startsearch">Start Search</button>
+      <button id="downloadButton"> <span>Download </span> <a href="#" hidden style="color: red;" target="_blank" id="downloadlink">Now</a></button>
     </div>
   </div>
+  <hr style="width: 40%;">
   <!-- Manage files upload and handling -->
   <div class="query_gen">
     <div class="upload-files">
       <div class="upload_btns">
         <div class="upload-btn-con">
           <label class="upload-btn" draggable="true" for="upload_files">Upload Files</label>
-          <input id="upload_files" draggable="true" accept=".xlsx , .xls" type="file" multiple hidden>
+          <input id="upload_files" class="upload-btn-files" draggable="true" accept=".xlsx , .xls" type="file" multiple
+            hidden>
         </div>
         <div class="upload-btn-con">
-          <label class="upload-btn" for="upload_files">Upload Folder</label>
-          <input id="upload_folder" type="folder" accept="/" hidden>
+          <label class="upload-btn" for="upload_folder">Upload Folder</label>
+          <input id="upload_folder" class="upload-btn-files" type="file" webkitdirectory multiple hidden>
         </div>
         <div class="upload-btn-con">
-          <label class="upload-btn" for="upload_files">Upload Zip</label>
-          <input id="upload_folder" type="folder" accept="/" hidden>
+          <label class="upload-btn" for="upload_zip">Upload Zip</label>
+          <input id="upload_zip" class="upload-btn-files" type="file" accept=".zip, .Rar, .7z" hidden>
         </div>
       </div>
 

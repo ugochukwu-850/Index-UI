@@ -1,0 +1,224 @@
+html {
+  overflow-y: auto;
+}
+
+body {
+  color: #ffffff;
+}
+
+.sidebar {
+  padding-left: calc(2rem - 0.75rem);
+  padding-right: calc(2rem - 0.75rem);
+  position: absolute;
+}
+.sidebar .category-header {
+  padding: 0.5em 0.75em;
+}
+.sidebar .menu {
+  position: fixed;
+  width: calc(13rem - 2.5rem);
+  max-width: inherit;
+}
+.sidebar .menu-list a {
+  font-size: 0.875rem;
+  line-height: 24px;
+  color: #949ba2;
+}
+
+.sidebar:before {
+  content: "";
+  background-color: #272b32;
+  width: 13rem;
+  position: fixed;
+}
+
+.sidebar,
+.sidebar:before {
+  top: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.main {
+  margin-left: 13rem;
+  position: relative;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+.main header {
+  line-height: 18px;
+}
+.main header h2 {
+  font-size: 24px;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+.main header hr {
+  background-color: transparent;
+  border-top: 1px solid #3b414c;
+}
+.main header small {
+  color: #949ba2;
+  text-align: right;
+}
+
+.main:before {
+  content: "";
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  z-index: -2;
+  left: 0;
+  right: 0;
+  background-image: radial-gradient(center, circle cover, #353944 0%, #272b32 70%);
+  background-position: 50%, 50%;
+}
+
+.sidebar,
+.main {
+  margin-top: 3.25rem;
+  padding-top: 2rem;
+}
+
+.navbar {
+  box-shadow: 0px 0px 21px #21232a;
+}
+
+.navbar-brand {
+  width: 13rem;
+  background-color: #ffa500;
+  margin-right: calc(2rem - 0.75rem);
+}
+.navbar-brand .navbar-item {
+  padding-left: 2rem;
+}
+
+.box hr {
+  background-color: #3b414c;
+}
+
+.box.transparent {
+  background-color: transparent;
+}
+
+.box.accent {
+  background-color: #ffa500;
+}
+.box.accent .subtitle {
+  color: #ffffff;
+}
+
+.statcard {
+  font-family: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  text-align: center;
+}
+.statcard .statcard-number {
+  font-size: 2rem;
+  font-weight: 300;
+  line-height: 1.125;
+}
+.statcard .statcard-desc {
+  font-size: 85%;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #949ba2;
+}
+.statcard .delta-indicator {
+  display: inline-block;
+  padding: 0.4em;
+  font-size: 12px;
+  vertical-align: middle;
+}
+.statcard .delta-indicator:after {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-left: 2px;
+  margin-left: 2px;
+  vertical-align: middle;
+  border-right: 4px solid transparent;
+  border-left: 4px solid transparent;
+}
+
+/* overwrite bulma, try to resolve with variables */
+.box {
+  background-color: #3b414c;
+  box-shadow: none;
+  border-radius: 3px;
+}
+
+.content h1,
+.content h2,
+.content h3,
+.content h4,
+.content h5,
+.content h6,
+.title,
+.tile {
+  color: #ffffff;
+}
+
+.subtitle {
+  color: #949ba2;
+}
+
+.navbar-item.is-tab:hover {
+  background-color: transparent;
+  border-bottom-color: #949ba2;
+}
+
+.navbar-item.is-tab {
+  border-bottom: 3px solid transparent;
+  min-height: 3.25rem;
+  padding-bottom: calc(0.5rem - 1px);
+}
+
+a.navbar-item:hover {
+  color: #21232a;
+}
+
+.breadcrumb li + li::before,
+.breadcrumb li a {
+  color: #5b646d;
+}
+
+.breadcrumb li a:hover,
+.breadcrumb li.is-active a {
+  color: #ffffff;
+}
+
+.tabs ul {
+  border-bottom-color: #5b646d;
+}
+
+.tabs li.is-active a {
+  border-bottom-color: #ffffff;
+  color: #ffffff;
+}
+
+.tabs a {
+  border-bottom-color: #5b646d;
+  color: #949ba2;
+}
+
+.tabs a:hover {
+  border-bottom-color: #ffffff;
+  color: #ffffff;
+}
+
+.pagination-link,
+.pagination-next,
+.pagination-previous {
+  border-color: #949ba2;
+  color: #949ba2;
+}
+
+.pagination-link.is-current,
+.pagination-link:hover,
+.pagination-next:hover,
+.pagination-previous:hover {
+  background-color: transparent;
+  border-color: #ffffff;
+  color: #ffffff;
+}/*# sourceMappingURL=redux.css.map */

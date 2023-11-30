@@ -1,5 +1,9 @@
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  background-color: #2e323b;
+}
+body::-webkit-scrollbar {
+  scrollbar-gutter: stable both-edges;
 }
 
 input {
@@ -9,6 +13,78 @@ input {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+header {
+  color: #ffffff;
+  display: flex;
+  flex-direction: row;
+  margin-top: 1.4rem;
+}
+header .left {
+  width: 50%;
+}
+header .left h2 {
+  margin: 0.1rem 0;
+}
+header .left small {
+  color: #949ba2;
+}
+header .right {
+  text-align: end;
+  color: #949ba2;
+  width: 100%;
+  padding: 4px 12px;
+}
+header .right small {
+  color: gray;
+}
+
+.logs {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  place-content: space-evenly;
+}
+.logs .search {
+  min-width: 240px;
+  margin: auto;
+  border: 1px solid #ffffff;
+  border-radius: 4px;
+  color: #ffffff;
+}
+.logs .search button {
+  width: 80%;
+  display: block;
+  margin: 1rem auto;
+  padding: 0.5rem;
+  font-size: 1rem;
+  letter-spacing: 0.15em;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.logs .log {
+  min-width: 240px;
+  margin: 1rem auto;
+  background-color: #3b414c;
+  border-radius: 4px;
+  border-right: 4px solid transparent;
+  border-left: 4px solid transparent;
+}
+.logs .log h4 {
+  font-size: 2rem;
+  font-weight: 300;
+  line-height: 1.125;
+  margin: 1.4rem;
+  color: #ffffff;
+}
+.logs .log h5 {
+  margin: 1rem 1.4rem;
+  font-size: 1rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #949ba2;
 }
 
 div.query_gen {
@@ -24,11 +100,10 @@ div.query_gen div.query_inputs {
   min-width: 350px;
 }
 div.query_gen div.upload-files {
-  border: 2px solid rgba(235, 206, 186, 0.5);
   border-radius: 8px;
   height: 400px;
   margin: 12px auto;
-  background-color: rgb(58, 55, 55);
+  background-color: #272b32;
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
@@ -43,12 +118,11 @@ div.query_gen div.upload-files .upload_btns {
   gap: 2%;
   max-height: 40px;
   padding: 12px 6px;
-  background-color: rgb(25, 66, 95);
+  background-color: #353944;
 }
 div.query_gen div.upload-files .upload_btns .upload-btn-con {
   background-color: #fff;
   border-radius: 8px;
-  border: 2px solid rgb(87, 8, 8);
   padding: 6px 8px;
   width: auto;
   margin: 0 auto;
@@ -70,7 +144,7 @@ div.query_gen div.upload-files .upload_btns .upload-btn-con label:hover {
 }
 div.query_gen div.upload-files .upload_btns .upload-btn-con:hover {
   color: white;
-  background-color: rgb(82, 10, 10);
+  background-color: #5b646d;
 }
 div.query_gen div.upload-files .upload_files_list {
   margin: 0;
@@ -83,35 +157,30 @@ div.query_gen div.upload-files .upload_files_list {
   overscroll-behavior: contain;
   width: auto;
 }
+div.query_gen div.upload-files .upload_files_list::-webkit-scrollbar {
+  display: none;
+}
+div.query_gen div.upload-files .upload_files_list:hover {
+  overflow-y: scroll;
+}
+div.query_gen div.upload-files .upload_files_list::-webkit-scrollbar {
+  scrollbar-gutter: stable both-edges;
+}
 div.query_gen div.upload-files .upload_files_list li {
   position: relative;
   margin: 4px auto;
+  margin: 2px 0.5rem;
   border-radius: 4px;
-  background-color: rgb(255, 253, 253);
+  background-color: #3b414c;
+  color: rgb(255, 253, 253);
   padding: 12px 4px;
   font-size: medium;
   list-style-type: none;
 }
-div.query_gen div.upload-files .upload_files_list li .removebtn {
-  width: 30px;
-  height: 15px;
-  position: absolute;
-  font-size: 32px;
-  right: 2%;
-  cursor: pointer;
-  top: 5%;
-  padding: 4px;
-  color: rgb(56, 7, 7);
-  margin: auto;
-  transform: rotate(45deg);
-}
-div.query_gen div.upload-files .upload_files_list li .removebtn:before {
-  transform: rotate(-45deg);
-}
 div.query_gen .query_inputs {
   position: relative;
   border-radius: 12px;
-  background-color: #e0dfdf;
+  background-color: #3b414c;
   height: 400px;
   display: flex;
   flex-direction: column;
@@ -128,13 +197,13 @@ div.query_gen .query_inputs .top {
 }
 div.query_gen .query_inputs .top h4 {
   text-align: center;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 1.2rem;
+  font-size: 1rem;
   padding: 0;
   margin: auto 0;
   margin-bottom: 12px;
-  padding: 1.2rem 0.5rem;
-  transition: 0.4s ease;
+  padding: 1rem 0.5rem;
+  transition: 1s ease;
+  color: #949ba2;
 }
 div.query_gen .query_inputs .top h4:hover {
   cursor: pointer;
@@ -142,16 +211,15 @@ div.query_gen .query_inputs .top h4:hover {
 div.query_gen .query_inputs .top h4:nth-child(1).active {
   border-top-left-radius: 12px;
   border-bottom-right-radius: 12px;
-  background-color: #f5f4f4;
-  border-right: 1.5prgb 228, 228, 228 #bbb9b9;
-  border-bottom: 1.5px solid #a09c9c;
+  background-color: #d1cfcf;
+  color: #2d3135;
 }
 div.query_gen .query_inputs .top h4:nth-child(2).active {
   border: none;
   border-bottom-left-radius: 12px;
-  background-color: #f5f4f4;
-  border-left: 1.5px solid #a09c9c;
-  border-bottom: 1.5px solid #a09c9c;
+  border-top-right-radius: 12px;
+  color: #2d3135;
+  background-color: #d1cfcf;
 }
 div.query_gen .query_inputs .buttom {
   position: absolute;
@@ -170,7 +238,7 @@ div.query_gen .query_inputs .buttom:hover {
   color: white;
 }
 div.query_gen .query_inputs .buttom span {
-  background-color: rgb(48, 48, 116);
+  background-color: #fff;
   border: none;
   border-radius: 50%;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
@@ -178,7 +246,7 @@ div.query_gen .query_inputs .buttom span {
   padding: 8px 12px;
   margin: auto;
   cursor: pointer;
-  color: whitesmoke;
+  color: black;
 }
 div.query_gen .query_inputs .queries {
   padding: 12px;
@@ -189,9 +257,12 @@ div.query_gen .query_inputs .queries {
   overscroll-behavior: contain;
   width: auto;
 }
+div.query_gen .query_inputs .queries::-webkit-scrollbar {
+  scrollbar-gutter: stable both-edges;
+}
 div.query_gen .query_inputs .queries .query_card {
   position: relative;
-  background-color: rgb(58, 55, 55);
+  background-color: #272b32;
   margin: 8px auto;
   width: 95%;
   border-radius: 12px;
@@ -210,7 +281,7 @@ div.query_gen .query_inputs .queries .query_card input[type=text] {
 div.query_gen .query_inputs .queries .query_card input.query_title {
   font-weight: 400;
   font-size: 1.5rem;
-  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  color: #ffffff;
 }
 div.query_gen .query_inputs .queries .query_card .removequery {
   position: absolute;
@@ -227,127 +298,4 @@ div.query_gen .query_inputs .queries .query_card .tags {
 div.query_gen .query_inputs .queries .query_card .tags input[type=text] {
   margin: 3px 8px;
   max-width: 43%;
-}
-
-div.log-board {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  background-color: rgb(58, 55, 55);
-  box-shadow: #a09c9c;
-  border-radius: 12px;
-  margin: 4rem 4rem;
-  padding: 0.5%;
-  border: 1px solid gold;
-}
-div.log-board div.logs,
-div.log-board div.process_int {
-  width: 45%;
-  min-width: 360px;
-  margin: 24px auto;
-}
-div.log-board .logs {
-  display: flex;
-  flex-direction: column;
-  flex-wrap: nowrap;
-}
-div.log-board .logs * {
-  padding: 0;
-  margin: 0;
-}
-div.log-board .logs h4.log-header {
-  font-size: 3.5rem;
-  letter-spacing: 0.5rem;
-  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
-  color: rgb(30, 6, 53);
-  border-bottom: 2px solid rgb(188, 181, 216);
-  padding: 0.5rem 0.2rem;
-  margin: 1rem 0.2rem;
-  color: white;
-}
-div.log-board .logs .log_data .log_datum {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-div.log-board .logs .log_data .log_datum span:not(.quant) {
-  margin: auto 12px;
-  color: rgb(223, 223, 255);
-  font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande", "Lucida Sans", Arial, sans-serif;
-  font-style: oblique;
-  font-size: 2rem;
-}
-div.log-board .logs .log_data .log_datum h6 {
-  text-align: start;
-  vertical-align: baseline;
-  font-size: 2rem;
-  color: rgb(196, 75, 75);
-}
-div.log-board .logs .log_data .log_datum .quant {
-  color: rgb(223, 223, 255);
-  font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande", "Lucida Sans", Arial, sans-serif;
-}
-div.log-board .process_int {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 2%;
-}
-div.log-board .process_int .process_log,
-div.log-board .process_int .action {
-  width: 42%;
-  min-width: 150px;
-  margin: 12px auto;
-}
-div.log-board .process_int .process_log {
-  color: #f7f7f7;
-}
-div.log-board .process_int .process_log h4.lheader {
-  font-size: 2.1rem;
-  margin: 1rem 4px;
-}
-div.log-board .process_int .process_log .live_log {
-  overflow-y: scroll;
-  scroll-behavior: smooth;
-}
-div.log-board .process_int .process_log .live_log .log_datum {
-  font-size: 1.2rem;
-}
-div.log-board .process_int .process_log .live_log .log_datum span:nth-child(1) {
-  color: green;
-}
-div.log-board .process_int .action {
-  color: white;
-}
-div.log-board .process_int .action .batch_id h6 {
-  height: -moz-max-content;
-  height: max-content;
-  font-size: 1.5rem;
-  margin: 12px auto;
-  color: white;
-  padding: 0 auto;
-  text-align: center;
-}
-div.log-board .process_int .action .cta-action {
-  width: 150px;
-  height: 150px;
-  color: green;
-  border-radius: 50%;
-  padding: auto;
-  margin: auto;
-  background-color: white;
-  display: flex;
-  flex-direction: column;
-  place-content: center;
-  cursor: pointer;
-}
-div.log-board .process_int .action .cta-action h4.verbose {
-  margin: auto;
-  cursor: pointer;
-  margin: 4px auto;
-  padding: 0;
-}
-div.log-board .process_int .action .cta-action span {
-  text-align: center;
 }/*# sourceMappingURL=main.css.map */

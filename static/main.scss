@@ -2,18 +2,117 @@ $bg-color: #fff;
 $uploadfile: rgb(255, 255, 255);
 ;
 $uploadfolder: #aaa;
+$font-color: #ffffff;
+$font-dark-color: #949ba2;
+$font-darker-color: #5b646d;
+$font-darkest-color: darken($font-darker-color, 20%);
+$highlight-color: #ff0000;
+$main-color: #2e323b;
+
+$light-color: lighten($main-color, 3%);
+$dark-color: darken($main-color, 3%);
+$lighter-color: lighten($main-color, 6%);
+$darker-color: darken($main-color, 6%);
+
+$gradient-color-start: $light-color;
+$gradient-color-end: $dark-color;
+
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  background-color: $main-color;
+  &::-webkit-scrollbar {
+    scrollbar-gutter: stable both-edges;
+  }
 }
 
 input {
   cursor: pointer;
 }
+
 a {
   color: inherit;
   text-decoration: none;
 }
+
+header {
+  color: $font-color;
+  display: flex;
+  flex-direction: row;
+  margin-top: 1.4rem;
+  .left {
+    width: 50%;
+    h2 {
+      
+      margin: .1rem 0;
+    }
+    small {
+      color: $font-dark-color;
+    }
+  }
+  .right {
+    text-align: end;
+    color: $font-dark-color;
+    width: 100%;
+    padding: 4px 12px;
+    small {
+      color: gray;
+    }
+  }
+}
+
+.logs{ 
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  place-content: space-evenly;
+  .search {
+    min-width: 240px;
+    margin: auto;
+    border: 1px solid $font-color;
+    border-radius: 4px;
+    color: $font-color;
+
+   
+    button {
+      width: 80%;
+      display: block;
+      margin: 1rem auto;
+      padding: .5rem;
+      font-size: 1rem;
+      letter-spacing: 0.15em;
+      border: none;
+      border-radius: 4px;
+      //border-bottom-right-radius: 0;
+      //border-top-right-radius: 0;
+      cursor: pointer;
+    };
+  }
+
+  .log{ 
+    min-width: 240px;
+    margin: 1rem auto;
+    background-color: $lighter-color;
+    border-radius: 4px;
+    border-right: 4px solid transparent;
+    border-left: 4px solid transparent; 
+
+    h4 { font-size: 2rem;
+      font-weight: 300;
+      line-height: 1.125;
+      margin: 1.4rem;
+      color: $font-color;
+    }
+    h5 { 
+      margin: 1rem 1.4rem;
+      font-size: 1rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: $font-dark-color;;
+    }
+  }
+}
+
 
 div.query_gen {
   display: flex;
@@ -29,12 +128,12 @@ div.query_gen {
   }
 
   div.upload-files {
-    border: 2px solid rgba(235, 206, 186, 0.5);
     border-radius: 8px;
     //padding: 12px;
     height: 400px;
     margin: 12px auto;
-    background-color: rgb(58, 55, 55);
+//    background-color: rgb(58, 55, 55);
+background-color: $dark-color;
 
     //background-color: rgb(25, 66, 95);
     display: flex;
@@ -52,12 +151,11 @@ div.query_gen {
       gap: 2%;
       max-height: 40px;
       padding: 12px 6px;
-      background-color: rgb(25, 66, 95);
+      background-color: $light-color;
 
       .upload-btn-con {
         background-color: #fff;
         border-radius: 8px;
-        border: 2px solid rgb(87, 8, 8);
         padding: 6px 8px;
         width: auto;
         margin: 0 auto;
@@ -81,7 +179,7 @@ div.query_gen {
 
         &:hover {
           color: white;
-          background-color: rgb(82, 10, 10);
+          background-color: $font-darker-color;
         }
 
       }
@@ -100,38 +198,35 @@ div.query_gen {
       overscroll-behavior: contain;
       width: auto;
 
+      &::-webkit-scrollbar {
+        display: none;
+      }
+
+      &:hover {
+        overflow-y: scroll;
+      }
+
+      &::-webkit-scrollbar {
+        scrollbar-gutter: stable both-edges;
+      }
+
       li {
         position: relative;
         margin: 4px auto;
+        margin: 2px .5rem;
         border-radius: 4px;
-        background-color: rgb(255, 253, 253);
+        background-color: $lighter-color;
+        color: rgb(255, 253, 253);
         padding: 12px 4px;
         font-size: medium;
         list-style-type: none;
 
 
-        .removebtn {
-          width: 30px;
-          height: 15px;
-          position: absolute;
-          font-size: 32px;
-          right: 2%;
-          cursor: pointer;
-          top: 5%;
-          padding: 4px;
-          color: rgb(56, 7, 7);
-          margin: auto;
-          transform: rotate(45deg);
-
-        }
+       
 
 
 
-        .removebtn:after {}
-
-        .removebtn:before {
-          transform: rotate(-45deg);
-        }
+       
       }
 
     }
@@ -140,7 +235,7 @@ div.query_gen {
   .query_inputs {
     position: relative;
     border-radius: 12px;
-    background-color: #e0dfdf;
+    background-color: $lighter-color;
     height: 400px;
     display: flex;
     flex-direction: column;
@@ -156,14 +251,13 @@ div.query_gen {
 
       h4 {
         text-align: center;
-        font-family: Arial, Helvetica, sans-serif;
-        font-size: 1.2rem;
+        font-size: 1rem;
         padding: 0;
-
         margin: auto 0;
         margin-bottom: 12px;
-        padding: 1.2rem .5rem;
-        transition: .4s ease;
+        padding: 1rem .5rem;
+        transition: 1s ease;
+        color: $font-dark-color;
 
         &:hover {
 
@@ -174,17 +268,20 @@ div.query_gen {
         &:nth-child(1).active {
           border-top-left-radius: 12px;
           border-bottom-right-radius: 12px;
-          background-color: #f5f4f4;
-          border-right: 1.5prgb(228, 228, 228) #bbb9b9;
-          border-bottom: 1.5px solid #a09c9c;
+          background-color: #d1cfcf;
+          color: $font-darkest-color;
+          //border-right: 1.5prgb(228, 228, 228) #bbb9b9;
+          //border-bottom: 1.5px solid #a09c9c;
         }
 
         &:nth-child(2).active {
           border: none;
           border-bottom-left-radius: 12px;
-          background-color: #f5f4f4;
-          border-left: 1.5px solid #a09c9c;
-          border-bottom: 1.5px solid #a09c9c;
+          border-top-right-radius: 12px;
+          color: $font-darkest-color;
+          background-color: #d1cfcf;
+          //border-left: 1.5px solid #a09c9c;
+          //border-bottom: 1.5px solid #a09c9c;
         }
       }
     }
@@ -207,7 +304,7 @@ div.query_gen {
       }
 
       span {
-        background-color: rgb(48, 48, 116);
+        background-color: $bg-color;
         border: none;
         border-radius: 50%;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -215,7 +312,7 @@ div.query_gen {
         padding: 8px 12px;
         margin: auto;
         cursor: pointer;
-        color: whitesmoke
+        color: black
       }
     }
 
@@ -227,10 +324,13 @@ div.query_gen {
       overflow-y: scroll;
       overscroll-behavior: contain;
       width: auto;
+      &::-webkit-scrollbar {
+        scrollbar-gutter: stable both-edges;
+      }
 
       .query_card {
         position: relative;
-        background-color: rgb(58, 55, 55);
+        background-color: $dark-color;
         margin: 8px auto;
         width: 95%;
         border-radius: 12px;
@@ -251,7 +351,7 @@ div.query_gen {
 
           font-weight: 400;
           font-size: 1.5rem;
-          font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+          color: $font-color;
         }
 
         .removequery {
@@ -277,154 +377,3 @@ div.query_gen {
   }
 }
 
-div.log-board {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  background-color: rgb(58, 55, 55);
-  box-shadow: #a09c9c;
-  //place-content: space-between;
-  border-radius: 12px;
-  margin: 4rem 4rem;
-  padding: .5%;
-  border: 1px solid gold;
-
-  div.logs,
-  div.process_int {
-    width: 45%;
-    min-width: 360px;
-    margin: 24px auto;
-  }
-
-  .logs {
-    display: flex;
-    flex-direction: column;
-    flex-wrap: nowrap;
-
-    * {
-      padding: 0;
-      margin: 0;
-    }
-
-    h4.log-header {
-      font-size: 3.5rem;
-      letter-spacing: .5rem;
-      font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-      color: rgb(30, 6, 53);
-      border-bottom: 2px solid rgb(188, 181, 216);
-      padding: .5rem .2rem;
-      margin: 1rem .2rem;
-      color: white;
-    }
-
-    .log_data {
-
-      .log_datum {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: 12px;
-
-        span:not(.quant) {
-          margin: auto 12px;
-
-          color: rgb(223, 223, 255);
-          font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-          font-style: oblique;
-          font-size: 2rem;
-
-        }
-
-        h6 {
-          text-align: start;
-          vertical-align: baseline;
-          font-size: 2rem;
-          color: rgb(196, 75, 75);
-        }
-
-        .quant {
-          color: rgb(223, 223, 255);
-          font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-        }
-      }
-    }
-  }
-
-  .process_int {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 2%;
-
-    .process_log,
-    .action {
-      width: 42%;
-      min-width: 150px;
-      margin: 12px auto;
-    }
-    .process_log{
-      color: #f7f7f7;
-      h4.lheader{
-        font-size: 2.1rem;
-        margin: 1rem 4px;
-      }
-      .live_log{
-        overflow-y: scroll;
-        scroll-behavior: smooth;
-        .log_datum {
-          font-size: 1.2rem;
-
-          span {
-            &:nth-child(1){
-              color: green;
-            }
-          }
-        }
-      }
-
-    }
-    .action {
-      color: white;
-      
-
-      .batch_id {
-
-        h6 {
-          height: max-content;
-          font-size: 1.5rem;
-          margin: 12px auto;
-          color: white;
-          padding: 0 auto;
-          text-align: center;
-        }
-      }
-
-      .cta-action {
-        width: 150px;
-        height: 150px;
-        color: green;
-        border-radius: 50%;
-        padding: auto;
-        margin: auto;
-        background-color: white;
-        display: flex;
-        flex-direction: column;
-        place-content: center;
-        cursor: pointer;
-
-        h4.verbose {
-          margin: auto;
-          cursor: pointer;
-          margin: 4px auto;
-          padding: 0;
-
-
-        }
-
-        span {
-          text-align: center;
-        }
-      }
-    }
-  }
-}

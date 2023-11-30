@@ -87,7 +87,7 @@ fn download(process_id: String) -> Json<HashMap<String , Vec<String>>> {
 async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
     //destroy the formdata
     let Upload { action, files } = &*upload;
-    println!("Len {}", files.len());
+    println!("Gotten files Len {} file action {:?}", files.len(), action.0);
 
     // check the process action
     match action.to_owned().0 {
@@ -222,7 +222,8 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
                 "code" : 200,
                 "ex_time": (Instant::now() - start).as_seconds_f32(),
                 "summary": "Batch process completed!!! ",
-                "currentBatch": index
+                "currentBatch": index,
+                "proc_id": proc_id
             }));
         }
     }
