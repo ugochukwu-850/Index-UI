@@ -2,6 +2,7 @@ pub(crate) mod menu;
 use menu::cache::del_key;
 use menu::cache::get_process;
 use menu::cache::get_stream;
+use menu::cache::key_ex;
 use menu::cache::key_exists;
 use menu::models::*;
 use menu::search;
@@ -50,6 +51,7 @@ fn index() -> Template {
 
 #[get("/download/<process_id>")]
 fn download(process_id: String) -> Json<HashMap<String , Vec<String>>> {
+    const EXPIRES : usize = 60 * 60 * 5;
     if let Ok(exists) = key_exists(&process_id) {
         if exists {
             if let Ok(Process {
@@ -65,7 +67,7 @@ fn download(process_id: String) -> Json<HashMap<String , Vec<String>>> {
                     }) = get_stream(&format!("{}@{x}", process_id))
                     {
                         //delete the stream id 
-                        let _ = del_key(&stream_id);
+                        let _ = key_ex(&stream_id, EXPIRES);
                         data.extend(stream_data.to_owned().into_iter())
                     }
                 }
@@ -74,7 +76,7 @@ fn download(process_id: String) -> Json<HashMap<String , Vec<String>>> {
 
                 // but for this testing purpose just return the Map as string
                 //delete the key
-                let _ = del_key(&process_id);
+                let _ = key_ex(&process_id, EXPIRES);
                 return Json(data);
 
             }
@@ -104,7 +106,9 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
                 // If TitleData  query
                 JsonQuery::TitleData(e) => {
                     // Iter through the files processing and updating the comp map
-                    let _ = files.into_par_iter().for_each(|f| {
+                    
+                    let _ = (0..files.len()).into_par_iter().for_each(|index| {
+                        let f = &files[index];
                         // if file has a path not None
                         if let Some(path) = f.path() {
                             // if the excel_work book could be created
@@ -112,6 +116,7 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
                                 // if the search in the file gave a valid response
                                 if let Some(x) = search::search_for_td(&mut excel, e.to_owned()) {
                                     // add the response to data
+                                    
                                     data.lock().unwrap().extend(x);
                                 }
                             }
@@ -123,7 +128,8 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
                 JsonQuery::OnlyData(e) => {
                     // Iter through the files processing and updating the comp map
 
-                    let _ = files.into_par_iter().for_each(|f| {
+                    let _ = (0..files.len()).into_par_iter().for_each(|index| {
+                        let f = &files[index];
                         // if the excel_work book could be created
 
                         if let Some(path) = f.path() {
@@ -131,7 +137,9 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
 
                             if let Ok(mut excel) = open_workbook_auto(path) {
                                 if let Some(x) = search::search_for_d_x(&mut excel, e.to_owned()) {
+                                    let names: Vec<&str> = files.iter().filter_map(|e| e.name()).collect();
                                     data.lock().unwrap().extend(x);
+                                    
                                 }
                             }
                         }
@@ -182,7 +190,6 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
                         if let Some(path) = f.path() {
                             if let Ok(mut excel) = open_workbook_auto(path) {
                                 if let Some(x) = search::search_for_td(&mut excel, e.to_owned()) {
-                                    println!("{:?}", x);
                                     data.lock().unwrap().extend(x);
                                 }
                             }

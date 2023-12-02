@@ -22,8 +22,11 @@ pub fn search_for_td(
         // loop through all cells
         for (row_index, col_index, cell_data) in excel_workbook.used_cells() {
             // get all the titles into the titles map filtering the non queried
-            if row_index == 0 && query.contains_key(cell_data.to_string().as_str()) {
-                //println!("running now");
+            if row_index == 0 {
+                //println!("cell data {col_index} - {:?} - {} -> {:?}", cell_data.to_string().replace("\r", ""), cell_data.to_string().contains("\n"), query.get(&cell_data.to_string()));
+            }
+            if row_index == 0 && query.contains_key(&cell_data.to_string()) {
+                //println!("found now");
                 titles.insert((row_index, col_index), cell_data.to_string());
                 continue;
             }

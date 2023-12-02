@@ -82,6 +82,7 @@
       <div class="queries">
         <div class="query_card">
           <button onclick="removeQueryCard(event);" class="removequery">-</button>
+          <!-- <input type="text" placeholder="Search Title" name="query_title1" id="query_title_1" class="query_title"> -->
           <input type="text" placeholder="Search Title" name="query_title1" id="query_title_1" class="query_title">
           <div class="tags">
             <input type="text" placeholder="Data Tag" class="queryvaluetag">

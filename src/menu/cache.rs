@@ -72,6 +72,8 @@ pub fn get_stream(id: &String) -> RedisResult<Stream> {
     }
 }
 
+
+
 pub fn key_exists(key: &String) -> RedisResult<bool> {
     let mut con = connection()?;
     let ex: Result<bool, RedisError> = con.exists(key);

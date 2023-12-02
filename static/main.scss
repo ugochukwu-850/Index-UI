@@ -337,7 +337,7 @@ background-color: $dark-color;
         transition: .3s all;
         padding: 12px;
 
-        input[type=text] {
+        textarea, input[type=text] {
           background-color: inherit;
           border: none;
           border-bottom: 2px solid rgb(116, 115, 115);
@@ -347,7 +347,7 @@ background-color: $dark-color;
           width: 100%;
         }
 
-        input.query_title {
+        textarea.query_title, input.query_title {
 
           font-weight: 400;
           font-size: 1.5rem;
@@ -367,7 +367,7 @@ background-color: $dark-color;
           place-content: start;
           margin-top: 12px;
 
-          input[type=text] {
+          textarea, input[type=text] {
             margin: 3px 8px;
             max-width: 43%;
           }

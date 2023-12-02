@@ -269,7 +269,7 @@ div.query_gen .query_inputs .queries .query_card {
   transition: 0.3s all;
   padding: 12px;
 }
-div.query_gen .query_inputs .queries .query_card input[type=text] {
+div.query_gen .query_inputs .queries .query_card textarea, div.query_gen .query_inputs .queries .query_card input[type=text] {
   background-color: inherit;
   border: none;
   border-bottom: 2px solid rgb(116, 115, 115);
@@ -278,7 +278,7 @@ div.query_gen .query_inputs .queries .query_card input[type=text] {
   outline: none;
   width: 100%;
 }
-div.query_gen .query_inputs .queries .query_card input.query_title {
+div.query_gen .query_inputs .queries .query_card textarea.query_title, div.query_gen .query_inputs .queries .query_card input.query_title {
   font-weight: 400;
   font-size: 1.5rem;
   color: #ffffff;
@@ -295,7 +295,7 @@ div.query_gen .query_inputs .queries .query_card .tags {
   place-content: start;
   margin-top: 12px;
 }
-div.query_gen .query_inputs .queries .query_card .tags input[type=text] {
+div.query_gen .query_inputs .queries .query_card .tags textarea, div.query_gen .query_inputs .queries .query_card .tags input[type=text] {
   margin: 3px 8px;
   max-width: 43%;
 }/*# sourceMappingURL=main.css.map */
