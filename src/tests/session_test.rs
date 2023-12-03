@@ -1,7 +1,7 @@
 
 use std::collections::HashMap;
 
-use crate::menu::{cache::{self, del_key, key_exists, get_process, key_ex}, models};
+use crate::menu::{cache::{self, del_key, key_exists, get_process, key_ex}, models, knubs::cleanText};
 
 
 
@@ -68,4 +68,12 @@ fn edue() {
     let mut map = HashMap::new();
     map.insert("物料代號\nmã vật liệu", "1");
     assert!(map.get("物料代號\nmã vật liệu").is_some())
+}
+
+
+#[test]
+fn testcleanText() {
+    let text = String::from("text\n\n\r\r\t\t  ");
+    let res = cleanText(&text);
+    assert_eq!(res.contains("\r"), false)
 }
