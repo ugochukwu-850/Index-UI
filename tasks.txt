@@ -1,0 +1,13 @@
+*** Sat 2 Dec ***
+Waiting Taks 
+ +-- Convert the main.js
+ ++ Make auto zipping and sending all data in zip files
+ ++ add asynchronous batch requesting
+ ++ Make the server to not use create process and only stream process
+ ++ Make the server compile function to return a .txt file with response
+ ++ Add file number and indexing for the data from the search algorith
+ ++ Fix the formatting string issues by removing all format strings from both front end and backend
+ ++ Handle zip file sending and batching limits for zip files
+ ++ Add zip handling at the backend and make sure it works
+ ++ Add file saving automatically on the same page using js 
+
