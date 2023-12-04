@@ -1,7 +1,7 @@
 
 use std::collections::HashMap;
 
-use crate::menu::{cache::{self, del_key, key_exists, get_process, key_ex}, models};
+use crate::menu::{cache::{self, del_key, key_exists, get_process, key_ex}, models, knubs::cleanText};
 
 
 
@@ -57,15 +57,4 @@ fn test_expres_data() {
     assert!(res.is_ok());
     let del = del_key(&key.proc_id);
     assert_eq!(del.is_ok(), true)
-}
-
-#[test]
-fn edue() {
-    for (x, _) in (1..3).enumerate() {
-        println!("{x}");
-    }
-
-    let mut map = HashMap::new();
-    map.insert("物料代號\nmã vật liệu", "1");
-    assert!(map.get("物料代號\nmã vật liệu").is_some())
 }

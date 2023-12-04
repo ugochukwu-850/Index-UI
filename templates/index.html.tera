@@ -7,13 +7,16 @@
   <title>One</title>
   <link rel="stylesheet" href="/static/main.css">
   <script src="/static/main.js"></script>
-  
+  <!-- Handle and zip files -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js"></script>
+ 
 </head>
 
 <body>
   <!-- the heading and log dashboard -->
   <header class="heading-nav">
     <div class="left">
+      
       <h2>Dashboard: Index-UI</h2>
       <small>Welcome to Index-UI</small>
     </div>
@@ -43,7 +46,8 @@
 
     <div class="search">
       <button id="startsearch">Start Search</button>
-      <button id="downloadButton"> <span>Download </span> <a href="#" hidden style="color: red;" target="_blank" id="downloadlink">Now</a></button>
+      <button id="downloadButton"> <span>Download </span> <a href="#" hidden style="color: red;" target="_blank"
+          id="downloadlink">Now</a></button>
     </div>
   </div>
   <hr style="width: 40%;">
