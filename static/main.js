@@ -65,22 +65,22 @@ document.addEventListener('DOMContentLoaded', function () {
         let started = new Date()
         console.log(started);
         let listOfForms = comileListOfForms(proc_id, queries);
-        CompileFiles(listOfForms, 10).then(response => {
+        await CompileFiles(listOfForms, 10).then(response => {
             console.log(response);
 
             // handle end of request
             handleEndOfRequest(proc_id)
-        }).catch(e => alert("An error occured while performing operation"));
+        }).catch(e => console.log("An error occured while performing operation", e));
         console.log(`Finished in ${new Date() - started} milliseconds`);
     })
 
 
-    async function handleEndOfRequest(proc_id) {
+    function handleEndOfRequest(proc_id) {
         downloadButton.removeAttribute("disabled");
         linkDownloadButton.href = `/download/${proc_id}`;
         linkDownloadButton.removeAttribute("hidden");
         // change to file save later
-        await linkDownloadButton.click();
+        linkDownloadButton.click();
 
         console.log(activeProcess);
         SearchButton.textContent = "Search";
@@ -91,6 +91,7 @@ document.addEventListener('DOMContentLoaded', function () {
         Files = [];
         filelist.innerHTML = "";
         document.querySelector("#file_size").textContent = "0";
+        document.getElementById("files_detected").textContent = "0";
 
         // disable download button after timeout
         setTimeout(() => {
@@ -196,7 +197,7 @@ function createQueryCard(e) {
     </div>
   </div>` : `<button onclick="removeQueryCard(event);" class="removequery">-</button>
   <input type="text" placeholder="Search Title" name="query_title1" id="query_title_1" class="query_title">`;
-    document.querySelector(".queries").append(card);
+    document.querySelector(".queries").prepend(card);
     let query_dash_count = document.querySelector("#queries_detected");
     let query_count = parseInt(query_dash_count.textContent);
     query_dash_count.textContent = `${query_count + 1}`
@@ -294,7 +295,7 @@ function batchFile() {
             return null;
         }
 
-        if (active_list_len < 100000000 /*kilobyte 100mb*/ && current_list.length <= 1000) {
+        if (active_list_len < 100000000 /*kilobyte 100mb*/ && current_list.length < 5000) {
             current_list.push(filelist[index])
             active_list_len = active_list_len + filelist[index].size;
 
@@ -354,14 +355,27 @@ async function CompileFiles(listOfForms, MAX_PARALLEL_REQUESTS) {
     for (let i = 0; i < listOfForms.length; i++) {
         const formData = listOfForms[i];
         console.log(`About to batch request bacth ${i}`);
-        const requestPromise = fetch('/upload', {
-            method: 'POST',
-            body: formData
-        }).then((response) => {
-            // Process request
-            console.log(`Success! Response for batch: ${[i]} generated.`);
-            return response.json();
-        });
+        var requestPromise;
+        if (i == listOfForms.length -1) {
+            requestPromise = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            }).then((response) => {
+                // Process request
+                console.log(`Success! Response for batch: ${[i]} generated.`);
+                return response.json();
+            }).catch(e => console.log(`An error occured for this batch ${i}`, e));
+        }
+        else {
+            requestPromise = fetch('/upload', {
+                method: 'POST',
+                body: formData
+            }).then((response) => {
+                // Process request
+                console.log(`Success! Response for batch: ${[i]} generated.`);
+                return response.json();
+            }).catch(e => console.log(`An error occured for this batch ${i}`, e));
+        }
 
         requestQ.push(requestPromise);
 
@@ -373,7 +387,7 @@ async function CompileFiles(listOfForms, MAX_PARALLEL_REQUESTS) {
     }
 
     // Wait for any remaining requests to complete
-    await Promise.all(requestQ);
+    return Promise.all(requestQ);
 };
 
 function cleanText(text) {

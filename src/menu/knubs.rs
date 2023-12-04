@@ -1,3 +1,5 @@
+
+
 pub fn cleanText(text: &String) -> String {
     let result: String = text
         .chars()

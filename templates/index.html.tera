@@ -7,8 +7,7 @@
   <title>One</title>
   <link rel="stylesheet" href="/static/main.css">
   <script src="/static/main.js"></script>
-  <!-- Handle and zip files -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js"></script>
+
  
 </head>
 
