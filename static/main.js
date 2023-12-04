@@ -6,6 +6,28 @@ var formData = new FormData();
 var activeProcess = null;
 var Files = [];
 
+const MAX_PARALLEL_REQUESTS = 5;
+
+const fetchWithLimit = async (listOfUrls) => {
+  let requestQ = [];
+
+  for (let i = 0; i < listOfUrls.length; i++) {
+    const fetchPromise = fetch(listOfUrls[i]);
+
+    requestQ.push(fetchPromise);
+
+    if (requestQ.length >= MAX_PARALLEL_REQUESTS) {
+      await Promise.all(requestQ);
+      requestQ = [];
+    }
+  }
+
+  // Wait for the remaining requests to complete
+  await Promise.all(requestQ);
+};
+
+fetchWithLimit(urls);
+
 
 document.addEventListener('DOMContentLoaded', function () {
     const SearchButton = document.querySelector("#startsearch");
@@ -464,6 +486,7 @@ document.addEventListener('DOMContentLoaded', function () {
         formData.append("action", JSON.stringify(query_create_process));
         formData = add_files_to_form(formData, files_batch[0]);
         //make the request 
+
 
         //set to searching
         SearchButton.textContent = "Searching";
