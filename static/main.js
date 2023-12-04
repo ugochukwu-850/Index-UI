@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // var fileArray = document.getElementById('fileArray');
     // fileArray.value = JSON.stringify({});
     document.querySelectorAll('.upload-btn-files').forEach(handler => {
-        handler.addEventListener('change', function (e) {
+        handler.addEventListener('change', async function (e) {
             handleUploadFileS(e);
         });
     });
@@ -62,7 +62,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
         // return;
-
+        let started = new Date()
+        console.log(started);
         let listOfForms = comileListOfForms(proc_id, queries);
         CompileFiles(listOfForms, 10).then(response => {
             console.log(response);
@@ -70,16 +71,16 @@ document.addEventListener('DOMContentLoaded', function () {
             // handle end of request
             handleEndOfRequest(proc_id)
         }).catch(e => alert("An error occured while performing operation"));
-
+        console.log(`Finished in ${new Date() - started} milliseconds`);
     })
 
 
-    function handleEndOfRequest(proc_id) {
+    async function handleEndOfRequest(proc_id) {
         downloadButton.removeAttribute("disabled");
         linkDownloadButton.href = `/download/${proc_id}`;
         linkDownloadButton.removeAttribute("hidden");
         // change to file save later
-        linkDownloadButton.click();
+        await linkDownloadButton.click();
 
         console.log(activeProcess);
         SearchButton.textContent = "Search";
@@ -89,22 +90,24 @@ document.addEventListener('DOMContentLoaded', function () {
         // remove files from memory
         Files = [];
         filelist.innerHTML = "";
+        document.querySelector("#file_size").textContent = "0";
 
         // disable download button after timeout
         setTimeout(() => {
             downloadButton.setAttribute("disabled", "");
             linkDownloadButton.href = ``;
             linkDownloadButton.setAttribute("hidden", "");
-        }, 1000 * 60 * 3);
+        }, 1000 * 60 * 5);
     }
 
 });
 
 
-function handleUploadFileS(e) {
+async function handleUploadFileS(e) {
     var files = e.target.files;
     var filelist = document.getElementById('filelist');
     var total_size = 0;
+    var limitReached = false;
     filelist.innerHTML = "";
     for (var i = 0; i < files.length; i++) {
         var file = files[i];
@@ -114,8 +117,10 @@ function handleUploadFileS(e) {
 
         reader.onload = (function (file, i) {
             return function () {
-                //formData.append('files[]', file);
-
+                if (i >= 1000) {
+                    limitReached = true;
+                    return;
+                }
                 var li = document.createElement('li');
                 li.setAttribute('data-id', 'file-' + i++);
 
@@ -144,8 +149,14 @@ function handleUploadFileS(e) {
         })(file, i);
 
         reader.readAsDataURL(file);
+
+        if (limitReached) {
+            alert("You have added over a 1000 files. \n Some of these files may not show in the filebox");
+            break;
+        }
     }
 
+    
     // updated the total file count
     document.querySelector("#files_detected").textContent = `${files.length}`;
 
@@ -226,14 +237,14 @@ function parseQueries() {
             var data = [];
             e.childNodes.forEach(c => {
                 // get the title
-                if (c.classList && c.classList.contains("query_title") && c.value.length > 0) {
-                    title = c.value.trim();
+                if (c.classList && c.classList.contains("query_title") && cleanText(c.value).length > 0) {
+                    title = cleanText(c.value);
                     //console.log(title);
                 }
                 else if (c.classList && c.classList.contains("tags")) {
                     c.childNodes.forEach(d => {
-                        if (d.classList && d.classList.contains("queryvaluetag") && d.value.length > 0) {
-                            data.push(d.value.trim());
+                        if (d.classList && d.classList.contains("queryvaluetag") && cleanText(d.value).length > 0) {
+                            data.push(cleanText(d.value));
                         }
                     })
                 }
@@ -254,8 +265,8 @@ function parseQueries() {
         document.querySelectorAll(".query_card").forEach(e => {
             e.childNodes.forEach(c => {
                 // get the title
-                if (c.classList && c.classList.contains("query_title") && c.value.length > 0) {
-                    keys.push(c.value.trim());
+                if (c.classList && c.classList.contains("query_title") && cleanText(c.value).length > 0) {
+                    keys.push(cleanText(c.value));
                     //console.log(keys);
                 }
 
@@ -342,12 +353,13 @@ async function CompileFiles(listOfForms, MAX_PARALLEL_REQUESTS) {
 
     for (let i = 0; i < listOfForms.length; i++) {
         const formData = listOfForms[i];
+        console.log(`About to batch request bacth ${i}`);
         const requestPromise = fetch('/upload', {
             method: 'POST',
             body: formData
         }).then((response) => {
             // Process request
-            console.log(`Processed request for batch: ${[i]}`);
+            console.log(`Success! Response for batch: ${[i]} generated.`);
             return response.json();
         });
 
@@ -365,10 +377,5 @@ async function CompileFiles(listOfForms, MAX_PARALLEL_REQUESTS) {
 };
 
 function cleanText(text) {
-    text = text.replace("\n", "");
-    text = text.replace("\t", "");
-    text = text.replace("\r", "");
-    text = text.replace(" ", "");
-
-    return text;
+    return text.replace(/\s+/g, '');
 }

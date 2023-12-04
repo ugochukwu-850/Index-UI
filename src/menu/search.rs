@@ -3,6 +3,8 @@ use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::vec;
 
+use super::knubs::cleanText;
+
 /// Performs title + data search on all `std::io::BufReader<std::fs::File>` file types
 /// Takes `excel: &mut Sheets<std::io::BufReader<std::fs::File>>`
 /// Returns: `Option<HashMap<String, Vec<String>>>`
@@ -22,10 +24,8 @@ pub fn search_for_td(
         // loop through all cells
         for (row_index, col_index, cell_data) in excel_workbook.used_cells() {
             // get all the titles into the titles map filtering the non queried
-            if row_index == 0 {
-                //println!("cell data {col_index} - {:?} - {} -> {:?}", cell_data.to_string().replace("\r", ""), cell_data.to_string().contains("\n"), query.get(&cell_data.to_string()));
-            }
-            if row_index == 0 && query.contains_key(&cell_data.to_string()) {
+            let clean_cell_data = cleanText(&cell_data.to_string());
+            if row_index == 0 && query.contains_key(&clean_cell_data) {
                 //println!("found now");
                 titles.insert((row_index, col_index), cell_data.to_string());
                 continue;
@@ -37,7 +37,7 @@ pub fn search_for_td(
                 let cell_data = cell_data.to_string();
 
                 // check if the title data are in them
-                if query.get(&title).unwrap().contains(&cell_data) {
+                if query.get(&cleanText(&title)).unwrap().contains(&cleanText(&cell_data)) {
                     // add cell data map to the data map
                     if let Some(e) = data.get_mut(&(0, col_index)) {
                         e.push(cell_data);
@@ -80,7 +80,8 @@ pub fn search_for_d_x(
         let _count = excel_workbook
             .used_cells()
             .map(|(row_index, col_index, cell_data)| {
-                if row_index != 0 && query.contains(&cell_data.to_string()) {
+                let clean_cell_data = cleanText(&cell_data.to_string());
+                if row_index != 0 && query.contains(&clean_cell_data) {
                     //println!("Found cell data for {}", cell_data.to_string());
 
                     // if infact this celldata has a real title
@@ -126,7 +127,8 @@ pub fn search_for_d(
             // get all the titles into the titles map filtering the non queried
 
             // NOT TITLE and is in same coloum as one of the titles and that titles data queries includes it
-            if query.contains(&cell_data.to_string()) && row_index != 0 {
+            let clean_cell_data = cleanText(&cell_data.to_string());
+            if query.contains(&clean_cell_data) && row_index != 0 {
                 //println!("Found cell data for {}", cell_data.to_string());
 
                 // if infact this celldata has a real title

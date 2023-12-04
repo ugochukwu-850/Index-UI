@@ -31,7 +31,7 @@ use rocket::{form::Form, serde::json::Json};
 
 #[launch]
 fn rocket() -> _ {
-    let figment = rocket::Config::figment().merge(("port", 8080)).merge((
+    let figment = rocket::Config::figment().merge((
         "limits",
         Limits::new()
             .limit("file", 200.megabytes())
@@ -46,25 +46,29 @@ fn rocket() -> _ {
 }
 
 #[get("/<page>")]
-fn index(page: String) -> Template {
+fn index(page: &str) -> Template {
     let context: HashMap<String, String> = HashMap::new();
-    Template::render(page, context)
+    Template::render(page.to_string(), context)
 }
 
 #[get("/download/<process_id>")]
-fn download(process_id: String) -> Json<HashMap<String, Vec<String>>> {
-    const EXPIRES: usize = 60 * 60 * 5;
+fn download(process_id: String) -> Json<Value> {
+    const EXPIRES: usize = 60 * 5;
     let mut comp = HashMap::new();
+    let mut files = Vec::new();
     let mut batch_index = 0;
     // loop through all the files and on failure just return
-    while let Ok(stream) = get_stream(&format!("{}@{}", process_id, batch_index)) {
+    while let Ok(mut stream) = get_stream(&format!("{}@{}", process_id, batch_index)) {
         // compile showing the index of the file and also the index of the row and the filename
-        let ind = stream.stream_data.len();
+        let ind: usize = stream.stream_data.len();
         comp.extend(stream.stream_data);
+        files.append(&mut stream.files);
         let _ = key_ex(&format!("{}@{}", process_id, batch_index), EXPIRES);
         batch_index += 1;
     }
-    Json(comp)
+    Json(json!({
+        "matches": comp, "files" : files
+    }))
 }
 
 #[post("/upload", data = "<upload>")]
@@ -138,6 +142,8 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
             )
         }
     };
+
+    println!("--> Finished processing batch {}. Execution Time : {} seconds \n", action.0.0, (Instant::now() - start).as_seconds_f64());
 
     Json(json!({
         "message": "success",
