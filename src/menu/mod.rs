@@ -3,3 +3,4 @@ pub mod search;
 pub mod models;
 pub mod zip;
 pub mod knubs;
+mod excel;
