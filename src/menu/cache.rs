@@ -7,7 +7,11 @@ use super::models::Stream;
 // This module is still in build and would be optimized alot.
 
 pub fn connection() -> RedisResult<Connection> {
-    let client = redis::Client::open("redis://127.0.0.1/")?;
+    let redis_port = std::env::var("REDIS_PORT").unwrap_or_else(|_| "6379".to_string());
+
+    // Create a connection to Redis using the fetched port
+    let redis_url = format!("redis://127.0.0.1:{}/", redis_port);
+    let client = redis::Client::open(redis_url)?;
     let connection = client.get_connection()?;
     Ok(connection)
 }

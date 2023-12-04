@@ -1,22 +1,49 @@
-name: Rust
+name: Index UI CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
 
-env:
+env: 
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  test:
     runs-on: ubuntu-latest
 
+    services:
+      redis:
+        image: "redis:latest"
+        ports:
+          - "0:6379"
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
-    - uses: actions/checkout@v3
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test main --verbose
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Setup redis
+        uses: supercharge/redis-github-action@1.2.0
+        with: 
+          redis-version: 6
+
+      - name: Install redis cli # so we can test the server
+        run: sudo apt-get install -y redis-tools
+      - name: Verify that redis is up
+        run: redis-cli ping
+      
+      - name: Set Redis Port as Environment Variable
+        run: echo "REDIS_PORT=${{ job.services.redis.ports['6379'] }}" >> $GITHUB_ENV
+      
+      - name: Build and Test
+        run: |
+          cargo build --verbose
+          cargo test --verbose
