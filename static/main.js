@@ -79,6 +79,7 @@ document.addEventListener('DOMContentLoaded', function () {
         downloadButton.removeAttribute("disabled");
         linkDownloadButton.href = `/download/${proc_id}`;
         linkDownloadButton.removeAttribute("hidden");
+        linkDownloadButton.download = "search_result.txt";
         // change to file save later
         linkDownloadButton.click();
 
@@ -105,25 +106,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 async function handleUploadFileS(e) {
-    var files = e.target.files;
+    var files = [];
+    if (e.target.id == "upload_zip" ) {files = await handleZipFile(e.target.files)} else {files = e.target.files };
+    console.log(files.length, files);
     var filelist = document.getElementById('filelist');
     var total_size = 0;
-    var limitReached = false;
     filelist.innerHTML = "";
+
     for (var i = 0; i < files.length; i++) {
         var file = files[i];
         var reader = new FileReader();
         //formData.append('files[]', file);
         total_size = total_size + file.size / 1000;
-
-        reader.onload = (function (file, i) {
-            return function () {
-                if (i >= 1000) {
-                    limitReached = true;
-                    return;
-                }
+        if (i >= 1000) {
+            alert("Your total added files exceed 1000. \n Some of these files may not show in the filebox");
+            break;
+        }
+        console.log(file.name);
+        if (!(file.name.endsWith('.xls') || file.name.endsWith('.xlsx'))) {
+            console.log("Rejected. file", file);
+            continue;
+        }
+        // Use a closure to capture the correct value of i
+        (function (index, fileName) {
+            reader.onload = function (e) {
                 var li = document.createElement('li');
-                li.setAttribute('data-id', 'file-' + i++);
+                li.setAttribute('data-id', 'file-' + index);
 
                 var input = document.createElement('input');
                 input.setAttribute('name', 'files[]');
@@ -133,28 +141,21 @@ async function handleUploadFileS(e) {
                 var div = document.createElement('div');
                 div.setAttribute('class', 'file-container');
 
-
                 var div2 = document.createElement('div');
                 div2.setAttribute('class', 'filename');
-
-
-                div2.appendChild(document.createTextNode(file.name));
+                div2.appendChild(document.createTextNode(fileName));
 
                 li.appendChild(input);
                 li.appendChild(div);
                 li.appendChild(div2);
 
-
-                filelist.prepend(li)
-            }
-        })(file, i);
+                filelist.prepend(li);
+            };
+        })(i, file.name);
 
         reader.readAsDataURL(file);
 
-        if (limitReached) {
-            alert("You have added over a 1000 files. \n Some of these files may not show in the filebox");
-            break;
-        }
+
     }
 
     
@@ -390,6 +391,40 @@ async function CompileFiles(listOfForms, MAX_PARALLEL_REQUESTS) {
     return Promise.all(requestQ);
 };
 
+// utility function to help clean search queries
 function cleanText(text) {
     return text.replace(/\s+/g, '');
+}
+
+async function handleZipFile(zips) {
+    const processedFiles = [];
+
+    for (const zipFile of zips) {
+        const fileContent = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.readAsArrayBuffer(zipFile);
+        });
+
+        const zip = await JSZip.loadAsync(fileContent);
+
+        const zipFileList = Object.keys(zip.files);
+
+        // Display the list of files in the zip file
+        console.log(`Files in ${zipFile.name}:`, zipFileList);
+
+        zipFileList.forEach((fileName) => {
+            const fileData = zip.files[fileName];
+
+            // Check if the entry is a file (not a directory)
+            if (!fileData.dir) {
+                const blob = new Blob([fileData._data], { type: 'application/octet-stream' });
+                const processedFile = new File([blob], fileName);
+                processedFiles.push(processedFile);
+            }
+        });
+    }
+
+    alert(`Processed ${processedFiles.length} files from ${zips.length} zip files`);
+    return processedFiles;
 }

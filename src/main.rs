@@ -1,4 +1,5 @@
 pub(crate) mod menu;
+use futures_util::io::BufWriter;
 use menu::cache::del_key;
 use menu::cache::get_process;
 use menu::cache::get_stream;
@@ -10,27 +11,30 @@ mod tests;
 
 #[macro_use]
 extern crate rocket;
-use rocket::data::{Limits, ToByteUnit};
-use rocket::fs::relative;
-use rocket::fs::TempFile;
-use rocket::time::Instant;
-use rocket::tokio::fs::File;
-use rocket_dyn_templates::Template;
-use serde_json::{json, Value};
-
 use rayon::{
     self,
     iter::{IntoParallelIterator, ParallelIterator},
 };
+use rocket::data::{Limits, ToByteUnit};
+use rocket::fs::relative;
+use rocket::fs::NamedFile;
+use rocket::fs::TempFile;
+use rocket::time::Instant;
+use rocket::tokio::fs::File;
+use rocket::tokio::io::AsyncWriteExt;
+use rocket_dyn_templates::Template;
+use serde_json::{json, Value};
 use std::collections::HashMap;
+use std::env::temp_dir;
 use std::sync::Mutex;
 
 use calamine::open_workbook_auto;
 use rocket::fs::FileServer;
 use rocket::{form::Form, serde::json::Json};
+use shuttle_rocket::ShuttleRocket;
 
-#[launch]
-fn rocket() -> _ {
+#[shuttle_runtime::main]
+async fn main() -> shuttle_rocket::ShuttleRocket {
     let figment = rocket::Config::figment().merge((
         "limits",
         Limits::new()
@@ -39,10 +43,12 @@ fn rocket() -> _ {
             .limit("data-form", 220.megabytes()),
     ));
 
-    rocket::custom(figment)
+    let server = rocket::custom(figment)
         .attach(Template::fairing())
         .mount("/", routes![index, upload, download])
-        .mount("/static", FileServer::from(relative!("static")).rank(1))
+        .mount("/static", FileServer::from(relative!("static")).rank(1));
+
+    Ok(server.into())
 }
 
 #[get("/<page>")]
@@ -52,7 +58,7 @@ fn index(page: &str) -> Template {
 }
 
 #[get("/download/<process_id>")]
-fn download(process_id: String) -> Json<Value> {
+async fn download(process_id: String) -> Vec<u8> {
     const EXPIRES: usize = 60 * 5;
     let mut comp = HashMap::new();
     let mut files = Vec::new();
@@ -66,9 +72,21 @@ fn download(process_id: String) -> Json<Value> {
         let _ = key_ex(&format!("{}@{}", process_id, batch_index), EXPIRES);
         batch_index += 1;
     }
-    Json(json!({
+    use rust_xlsxwriter::{Workbook, Worksheet};
+
+    let mut workbook = Workbook::new();
+    let worksheet = workbook.add_worksheet();
+    _ = worksheet.set_name("name");
+    let pathsave = temp_dir().join("newafile.xlsx");
+    let _buf = workbook.save_to_buffer().unwrap();
+    let files = json!({
         "matches": comp, "files" : files
-    }))
+    })
+    .to_string()
+    .as_bytes()
+    .to_owned();
+    
+    files
 }
 
 #[post("/upload", data = "<upload>")]
@@ -111,7 +129,7 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
                     if let Ok(mut excel) = open_workbook_auto(path) {
                         if let Some(x) = search::search_for_d_x(&mut excel, e.to_owned()) {
                             let mut data = data.lock().unwrap();
-                            
+
                             data.extend(x);
 
                             filenames
@@ -143,7 +161,11 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
         }
     };
 
-    println!("--> Finished processing batch {}. Execution Time : {} seconds \n", action.0.0, (Instant::now() - start).as_seconds_f64());
+    println!(
+        "--> Finished processing batch {}. Execution Time : {} seconds \n",
+        action.0 .0,
+        (Instant::now() - start).as_seconds_f64()
+    );
 
     Json(json!({
         "message": "success",

@@ -4,10 +4,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>One</title>
+  <title>Index-UI: Excel Search Optimizer</title>
   <link rel="stylesheet" href="/static/main.css">
   <script src="/static/main.js"></script>
 
+  <!-- CDN to help handle unzipping files -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
+  
  
 </head>
 
@@ -45,7 +48,7 @@
 
     <div class="search">
       <button id="startsearch">Start Search</button>
-      <button id="downloadButton"> <span>Download </span> <a href="#" hidden style="color: red;" target="_blank"
+      <button id="downloadButton"> <span>Download </span> <a href="#" hidden style="color: red;" 
           id="downloadlink">Now</a></button>
     </div>
   </div>

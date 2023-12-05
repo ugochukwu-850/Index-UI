@@ -39,9 +39,9 @@ fn test_get_data() {
 
 #[test]
 fn test_del_data() {
-    
     let key = models::Process::new();
     let res = cache::set_process(key.to_owned());
+    println!("{:?}", res);
     assert_eq!(res.is_ok(), true);
     let del = del_key(&key.proc_id);
     assert_eq!(del.is_ok(), true)
@@ -52,6 +52,7 @@ fn test_expres_data() {
     
     let key = models::Process::new();
     let res = cache::set_process(key.to_owned());
+    println!("{:?}", res);
     assert_eq!(res.is_ok(), true);
     let res = key_ex(&key.proc_id, 10);
     assert!(res.is_ok());
