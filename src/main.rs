@@ -31,10 +31,9 @@ use std::sync::Mutex;
 use calamine::open_workbook_auto;
 use rocket::fs::FileServer;
 use rocket::{form::Form, serde::json::Json};
-use shuttle_rocket::ShuttleRocket;
 
-#[shuttle_runtime::main]
-async fn main() -> shuttle_rocket::ShuttleRocket {
+#[launch]
+fn rocket() -> _ {
     let figment = rocket::Config::figment().merge((
         "limits",
         Limits::new()
@@ -43,12 +42,12 @@ async fn main() -> shuttle_rocket::ShuttleRocket {
             .limit("data-form", 220.megabytes()),
     ));
 
-    let server = rocket::custom(figment)
+    rocket::custom(figment)
         .attach(Template::fairing())
         .mount("/", routes![index, upload, download])
-        .mount("/static", FileServer::from(relative!("static")).rank(1));
+        .mount("/static", FileServer::from(relative!("static")).rank(1))
 
-    Ok(server.into())
+   
 }
 
 #[get("/")]
