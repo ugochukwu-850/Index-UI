@@ -1,4 +1,5 @@
 pub(crate) mod menu;
+use futures_util::SinkExt;
 use menu::cache::del_key;
 use menu::cache::get_process;
 use menu::cache::get_stream;
@@ -45,14 +46,14 @@ fn rocket() -> _ {
         .mount("/static", FileServer::from(relative!("static")).rank(1))
 }
 
-#[get("/<page>")]
-fn index(page: &str) -> Template {
+#[get("/")]
+fn index() -> Template {
     let context: HashMap<String, String> = HashMap::new();
-    Template::render(page.to_string(), context)
+    Template::render("index", context)
 }
 
 #[get("/download/<process_id>")]
-fn download(process_id: String) -> Json<Value> {
+fn download(process_id: String) -> Vec<u8> {
     const EXPIRES: usize = 60 * 5;
     let mut comp = HashMap::new();
     let mut files = Vec::new();
@@ -66,9 +67,12 @@ fn download(process_id: String) -> Json<Value> {
         let _ = key_ex(&format!("{}@{}", process_id, batch_index), EXPIRES);
         batch_index += 1;
     }
-    Json(json!({
+    json!({
         "matches": comp, "files" : files
-    }))
+    })
+    .to_string()
+    .as_bytes()
+    .to_vec()
 }
 
 #[post("/upload", data = "<upload>")]
@@ -111,7 +115,7 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
                     if let Ok(mut excel) = open_workbook_auto(path) {
                         if let Some(x) = search::search_for_d_x(&mut excel, e.to_owned()) {
                             let mut data = data.lock().unwrap();
-                            
+
                             data.extend(x);
 
                             filenames
@@ -143,7 +147,11 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
         }
     };
 
-    println!("--> Finished processing batch {}. Execution Time : {} seconds \n", action.0.0, (Instant::now() - start).as_seconds_f64());
+    println!(
+        "--> Finished processing batch {}. Execution Time : {} seconds \n",
+        action.0 .0,
+        (Instant::now() - start).as_seconds_f64()
+    );
 
     Json(json!({
         "message": "success",
