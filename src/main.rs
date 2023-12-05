@@ -1,5 +1,5 @@
 pub(crate) mod menu;
-use futures_util::io::BufWriter;
+use futures_util::SinkExt;
 use menu::cache::del_key;
 use menu::cache::get_process;
 use menu::cache::get_stream;
@@ -51,14 +51,14 @@ async fn main() -> shuttle_rocket::ShuttleRocket {
     Ok(server.into())
 }
 
-#[get("/<page>")]
-fn index(page: &str) -> Template {
+#[get("/")]
+fn index() -> Template {
     let context: HashMap<String, String> = HashMap::new();
-    Template::render(page.to_string(), context)
+    Template::render("index", context)
 }
 
 #[get("/download/<process_id>")]
-async fn download(process_id: String) -> Vec<u8> {
+fn download(process_id: String) -> Vec<u8> {
     const EXPIRES: usize = 60 * 5;
     let mut comp = HashMap::new();
     let mut files = Vec::new();
@@ -72,21 +72,12 @@ async fn download(process_id: String) -> Vec<u8> {
         let _ = key_ex(&format!("{}@{}", process_id, batch_index), EXPIRES);
         batch_index += 1;
     }
-    use rust_xlsxwriter::{Workbook, Worksheet};
-
-    let mut workbook = Workbook::new();
-    let worksheet = workbook.add_worksheet();
-    _ = worksheet.set_name("name");
-    let pathsave = temp_dir().join("newafile.xlsx");
-    let _buf = workbook.save_to_buffer().unwrap();
-    let files = json!({
+    json!({
         "matches": comp, "files" : files
     })
     .to_string()
     .as_bytes()
-    .to_owned();
-    
-    files
+    .to_vec()
 }
 
 #[post("/upload", data = "<upload>")]

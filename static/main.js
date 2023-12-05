@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function () {
         downloadButton.removeAttribute("disabled");
         linkDownloadButton.href = `/download/${proc_id}`;
         linkDownloadButton.removeAttribute("hidden");
-        linkDownloadButton.download = "search_result.txt";
+        linkDownloadButton.download = `Search_Result.${proc_id}.txt`;
         // change to file save later
         linkDownloadButton.click();
 
