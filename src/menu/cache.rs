@@ -5,12 +5,11 @@ use redis::{Commands, Connection, ErrorKind, RedisError, RedisResult};
 use super::models::Stream;
 
 // This module is still in build and would be optimized alot.
-use urlencoding;
 pub fn connection() -> RedisResult<Connection> {
     let redis_port = std::env::var("REDIS_PORT").unwrap_or_else(|_| "6379".to_string());
     // Create a connection to Redis using the fetched port
     let redis_url = format!("redis://127.0.0.1:{}/", redis_port);
-    let redis_url = "rediss://red-ckt7ltg168ec738dodcg:xIEJbECEzPI6xaVZWYMHi90OSS2jliN2@oregon-redis.render.com:6379";
+   // let redis_url = "rediss://red-ckt7ltg168ec738dodcg:xIEJbECEzPI6xaVZWYMHi90OSS2jliN2@oregon-redis.render.com:6379";
     let client = redis::Client::open(redis_url)?;
     let connection = client.get_connection()?;
     Ok(connection)

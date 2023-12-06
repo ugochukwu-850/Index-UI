@@ -12,14 +12,15 @@ use super::knubs::cleanText;
 pub fn search_for_td(
     excel: &mut Sheets<std::io::BufReader<std::fs::File>>,
     query: HashMap<String, HashSet<String>>,
-) -> Option<HashMap<String, Vec<String>>> {
+    file_index: usize
+) -> Option<HashMap<String, Vec<(String, String)>>> {
     // if the workbook has the work_sheet first file
     if let Some(Ok(excel_workbook)) = excel.worksheet_range(excel.sheet_names()[0].as_str()) {
         // create a map for titles matrix location and cell data
         let mut titles = HashMap::new();
 
         // create data map for title to map
-        let mut data: HashMap<(usize, usize), Vec<String>> = HashMap::new();
+        let mut data: HashMap<(usize, usize), Vec<(String, String)>> = HashMap::new();
 
         // loop through all cells
         for (row_index, col_index, cell_data) in excel_workbook.used_cells() {
@@ -40,9 +41,9 @@ pub fn search_for_td(
                 if query.get(&cleanText(&title)).unwrap().contains(&cleanText(&cell_data)) {
                     // add cell data map to the data map
                     if let Some(e) = data.get_mut(&(0, col_index)) {
-                        e.push(cell_data);
+                        e.push((file_index.to_string(), cell_data));
                     } else {
-                        data.insert((0, col_index), vec![cell_data]);
+                        data.insert((0, col_index), vec![(file_index.to_string(), cell_data)]);
                     };
                 }
             }
@@ -71,10 +72,11 @@ pub fn search_for_td(
 pub fn search_for_d_x(
     excel: &mut Sheets<std::io::BufReader<std::fs::File>>,
     query: HashSet<String>,
-) -> Option<HashMap<String, Vec<String>>> {
+    file_index: usize
+) -> Option<HashMap<String, Vec<(String, String)>>> {
     if let Some(Ok(excel_workbook)) = excel.worksheet_range(excel.sheet_names()[0].as_str()) {
         // create a map for titles matrix location and cell data
-        let mut processed_data: HashMap<String, Vec<String>> = HashMap::new();
+        let mut processed_data: HashMap<String, Vec<(String, String)>> = HashMap::new();
       
         // loop through all cells using a iterator
         let _count = excel_workbook
@@ -89,8 +91,8 @@ pub fn search_for_d_x(
                         if !title.is_empty() {
                             processed_data
                                 .entry(title.to_string())
-                                .and_modify(|e| e.push(cell_data.to_string()))
-                                .or_insert(vec![cell_data.to_string()]);
+                                .and_modify(|e| e.push((file_index.to_string(), cell_data.to_string())))
+                                .or_insert(vec![(file_index.to_string(), cell_data.to_string())]);
                         }
                     }
                 }

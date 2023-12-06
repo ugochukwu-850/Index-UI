@@ -24,8 +24,10 @@ pub enum Action {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct  Stream {
     pub stream_id: String,
-    pub stream_data : HashMap<String, Vec<String>>,
-    pub files: Vec<String>
+    /// key : Data Title . Values: v.0 - file index, v.1 cell data
+    pub stream_data : HashMap<String, Vec<(String, String)>>,
+    /// Key: File Index in batch @ batch number . Value : v.0 filename, v.1 filelastmodified
+    pub files: HashMap<String, (String, String)>
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

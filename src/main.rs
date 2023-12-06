@@ -27,10 +27,15 @@ use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::env::temp_dir;
 use std::sync::Mutex;
+use zip::DateTime;
 
 use calamine::open_workbook_auto;
 use rocket::fs::FileServer;
 use rocket::{form::Form, serde::json::Json};
+
+use crate::menu::excel::new_excel_file;
+use crate::menu::knubs::generate_index;
+use crate::menu::knubs::get_bacth_index_from_proc_id;
 
 #[launch]
 fn rocket() -> _ {
@@ -46,8 +51,6 @@ fn rocket() -> _ {
         .attach(Template::fairing())
         .mount("/", routes![index, upload, download])
         .mount("/static", FileServer::from(relative!("static")).rank(1))
-
-   
 }
 
 #[get("/")]
@@ -60,23 +63,52 @@ fn index() -> Template {
 fn download(process_id: String) -> Vec<u8> {
     const EXPIRES: usize = 60 * 5;
     let mut comp = HashMap::new();
-    let mut files = Vec::new();
+    let mut files = HashMap::new();
     let mut batch_index = 0;
     // loop through all the files and on failure just return
     while let Ok(mut stream) = get_stream(&format!("{}@{}", process_id, batch_index)) {
         // compile showing the index of the file and also the index of the row and the filename
         let ind: usize = stream.stream_data.len();
         comp.extend(stream.stream_data);
-        files.append(&mut stream.files);
+        files.extend(stream.files);
         let _ = key_ex(&format!("{}@{}", process_id, batch_index), EXPIRES);
         batch_index += 1;
     }
-    json!({
-        "matches": comp, "files" : files
-    })
-    .to_string()
-    .as_bytes()
-    .to_vec()
+
+    // Create the first header row
+    let title_len = comp.keys().len();
+    let mut totalled = vec![];
+    let mut header_row: Vec<String> = vec![
+        "Last Revised | Searched",
+        "Filename Number",
+        "Serial_number",
+        "File + Serial Number",
+        "Filename",
+    ]
+    .into_iter()
+    .map(|f| f.to_string())
+    .collect();
+    let mut titles_list = vec!["".to_string(); title_len];
+    header_row.append(&mut titles_list);
+    totalled.push(header_row);
+    //let file_virtual_index_map = HashMap::new();
+
+    // loop through the files creating a list of rows
+    for (index, file_data) in files.to_owned().into_iter().enumerate() {
+        let mut ready_info = vec![
+            "Get Time".to_string(),
+            index.to_string(),
+            file_data.0.to_owned(),
+            format!("{} at {}", file_data.0, index),
+            file_data.1.0,
+        ];
+        ready_info.append(&mut vec!["".to_string(); title_len]);
+        totalled.push(ready_info);
+    }
+
+    // convert to excel file
+    new_excel_file(totalled)
+    
 }
 
 #[post("/upload", data = "<upload>")]
@@ -94,20 +126,28 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
     // get the query and search the files
     let start = Instant::now();
     let data = Mutex::new(HashMap::new());
-    let filenames: Mutex<Vec<String>> = Mutex::new(Vec::new());
+    let filenames = Mutex::new(HashMap::new());
+    let bacth_index = get_bacth_index_from_proc_id(&proc_id);
     let _ = match query.to_owned() {
         JsonQuery::TitleData(e) => {
             let _ = files.into_par_iter().for_each(|f| {
                 if let Some(path) = f.path() {
                     if let Ok(mut excel) = open_workbook_auto(path) {
-                        if let Some(x) = search::search_for_td(&mut excel, e.to_owned()) {
+                        let mut filenames = filenames.lock().unwrap();
+                        let file_index = filenames.len() - 1;
+                        let filenames_data = HashMap::from([(
+                            generate_index(bacth_index, file_index),
+                            (
+                                f.name().unwrap_or("no_file_name.xlsx").to_string(),
+                                "t".to_string(),
+                            ),
+                        )]);
+                        filenames.extend(filenames_data);
+                        if let Some(x) = search::search_for_td(&mut excel, e.to_owned(), file_index)
+                        {
                             let mut data = data.lock().unwrap();
 
                             data.extend(x);
-                            filenames
-                                .lock()
-                                .unwrap()
-                                .push(f.name().unwrap_or("no_file_name.xlsx").to_string());
                         }
                     }
                 }
@@ -117,15 +157,23 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
             let _ = files.into_par_iter().for_each(|f| {
                 if let Some(path) = f.path() {
                     if let Ok(mut excel) = open_workbook_auto(path) {
-                        if let Some(x) = search::search_for_d_x(&mut excel, e.to_owned()) {
+                        let mut filenames = filenames.lock().unwrap();
+                        let file_index = filenames.len() - 1;
+                        let filenames_data = HashMap::from([(
+                            generate_index(bacth_index, file_index),
+                            (
+                                f.name().unwrap_or("no_file_name.xlsx").to_string(),
+                                "t".to_string(),
+                            ),
+                        )]);
+                        filenames.extend(filenames_data);
+
+                        if let Some(x) =
+                            search::search_for_d_x(&mut excel, e.to_owned(), file_index)
+                        {
                             let mut data = data.lock().unwrap();
 
                             data.extend(x);
-
-                            filenames
-                                .lock()
-                                .unwrap()
-                                .push(f.name().unwrap_or("no_file_name.xlsx").to_string());
                         }
                     }
                 }

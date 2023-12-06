@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function () {
         downloadButton.removeAttribute("disabled");
         linkDownloadButton.href = `/download/${proc_id}`;
         linkDownloadButton.removeAttribute("hidden");
-        linkDownloadButton.download = `Search_Result.${proc_id}.txt`;
+        linkDownloadButton.download = `Search_Result.${proc_id}.xlsx`;
         // change to file save later
         linkDownloadButton.click();
 
@@ -108,7 +108,6 @@ document.addEventListener('DOMContentLoaded', function () {
 async function handleUploadFileS(e) {
     var files = [];
     if (e.target.id == "upload_zip" ) {files = await handleZipFile(e.target.files)} else {files = e.target.files };
-    console.log(files.length, files);
     var filelist = document.getElementById('filelist');
     var total_size = 0;
     filelist.innerHTML = "";
@@ -122,7 +121,6 @@ async function handleUploadFileS(e) {
             alert("Your total added files exceed 1000. \n Some of these files may not show in the filebox");
             break;
         }
-        console.log(file.name);
         if (!(file.name.endsWith('.xls') || file.name.endsWith('.xlsx'))) {
             console.log("Rejected. file", file);
             continue;
