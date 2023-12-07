@@ -1,10 +1,10 @@
 pub(crate) mod menu;
-use futures_util::SinkExt;
 use menu::cache::del_key;
 use menu::cache::get_process;
 use menu::cache::get_stream;
 use menu::cache::key_ex;
 use menu::cache::key_exists;
+use menu::excel;
 use menu::models::*;
 use menu::search;
 mod tests;
@@ -25,6 +25,7 @@ use rocket::tokio::io::AsyncWriteExt;
 use rocket_dyn_templates::Template;
 use serde_json::{json, Value};
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::env::temp_dir;
 use std::sync::Mutex;
 use zip::DateTime;
@@ -34,6 +35,7 @@ use rocket::fs::FileServer;
 use rocket::{form::Form, serde::json::Json};
 
 use crate::menu::excel::new_excel_file;
+use crate::menu::excel::new_excel_file_t;
 use crate::menu::knubs::generate_index;
 use crate::menu::knubs::get_bacth_index_from_proc_id;
 
@@ -59,55 +61,32 @@ fn index() -> Template {
     Template::render("index", context)
 }
 
+
 #[get("/download/<process_id>")]
 fn download(process_id: String) -> Vec<u8> {
     const EXPIRES: usize = 60 * 5;
-    let mut comp = HashMap::new();
-    let mut files = HashMap::new();
+    let mut titles = Vec::new();
+    let mut body = Vec::new();
     let mut batch_index = 0;
     // loop through all the files and on failure just return
-    while let Ok(mut stream) = get_stream(&format!("{}@{}", process_id, batch_index)) {
+    while let Ok(stream) = get_stream(&format!("{}@{}", process_id, batch_index)) {
         // compile showing the index of the file and also the index of the row and the filename
-        let ind: usize = stream.stream_data.len();
-        comp.extend(stream.stream_data);
-        files.extend(stream.files);
+        let ind: usize = stream.batch_matrix.len();
+        body.extend(stream.batch_matrix);
+        titles.extend(stream.title_row);
         let _ = key_ex(&format!("{}@{}", process_id, batch_index), EXPIRES);
         batch_index += 1;
     }
 
+    // convert the title to vec
+    let titles: Vec<String> = titles.into_iter().map(|t| t).collect();
+    let mut matrix = Vec::new();
+    matrix.push(titles);
+    matrix.extend(body);
+
+    println!("Matrix after getting from the session \n \t {matrix:?}");
     // Create the first header row
-    let title_len = comp.keys().len();
-    let mut totalled = vec![];
-    let mut header_row: Vec<String> = vec![
-        "Last Revised | Searched",
-        "Filename Number",
-        "Serial_number",
-        "File + Serial Number",
-        "Filename",
-    ]
-    .into_iter()
-    .map(|f| f.to_string())
-    .collect();
-    let mut titles_list = vec!["".to_string(); title_len];
-    header_row.append(&mut titles_list);
-    totalled.push(header_row);
-    //let file_virtual_index_map = HashMap::new();
-
-    // loop through the files creating a list of rows
-    for (index, file_data) in files.to_owned().into_iter().enumerate() {
-        let mut ready_info = vec![
-            "Get Time".to_string(),
-            index.to_string(),
-            file_data.0.to_owned(),
-            format!("{} at {}", file_data.0, index),
-            file_data.1.0,
-        ];
-        ready_info.append(&mut vec!["".to_string(); title_len]);
-        totalled.push(ready_info);
-    }
-
-    // convert to excel file
-    new_excel_file(totalled)
+    new_excel_file_t(matrix)
     
 }
 
@@ -125,69 +104,41 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
 
     // get the query and search the files
     let start = Instant::now();
-    let data = Mutex::new(HashMap::new());
-    let filenames = Mutex::new(HashMap::new());
-    let bacth_index = get_bacth_index_from_proc_id(&proc_id);
+    let data = Mutex::new(Vec::new());
+    let titles = Mutex::new(Vec::new());
     let _ = match query.to_owned() {
-        JsonQuery::TitleData(e) => {
-            let _ = files.into_par_iter().for_each(|f| {
-                if let Some(path) = f.path() {
-                    if let Ok(mut excel) = open_workbook_auto(path) {
-                        let mut filenames = filenames.lock().unwrap();
-                        let file_index = filenames.len() - 1;
-                        let filenames_data = HashMap::from([(
-                            generate_index(bacth_index, file_index),
-                            (
-                                f.name().unwrap_or("no_file_name.xlsx").to_string(),
-                                "t".to_string(),
-                            ),
-                        )]);
-                        filenames.extend(filenames_data);
-                        if let Some(x) = search::search_for_td(&mut excel, e.to_owned(), file_index)
-                        {
-                            let mut data = data.lock().unwrap();
-
-                            data.extend(x);
-                        }
-                    }
-                }
-            });
-        }
         JsonQuery::OnlyData(e) => {
             let _ = files.into_par_iter().for_each(|f| {
                 if let Some(path) = f.path() {
                     if let Ok(mut excel) = open_workbook_auto(path) {
-                        let mut filenames = filenames.lock().unwrap();
-                        let file_index = filenames.len() - 1;
-                        let filenames_data = HashMap::from([(
-                            generate_index(bacth_index, file_index),
-                            (
-                                f.name().unwrap_or("no_file_name.xlsx").to_string(),
-                                "t".to_string(),
-                            ),
-                        )]);
-                        filenames.extend(filenames_data);
-
-                        if let Some(x) =
-                            search::search_for_d_x(&mut excel, e.to_owned(), file_index)
+                        
+                        if let Ok(file_matrix) =
+                            search::search_for_data_row(&mut excel, e.to_owned())
                         {
+                            println!("{:?}", file_matrix);
                             let mut data = data.lock().unwrap();
+                            let mut titles = titles.lock().unwrap();
 
-                            data.extend(x);
+                            data.extend(file_matrix.1);
+                            titles.extend(file_matrix.0)
                         }
                     }
                 }
             });
+        },
+        _ => {
+
         }
     };
 
     // unlock and create instance
     let data = data.lock().unwrap().to_owned();
-    let filenames = filenames.lock().unwrap().to_owned();
+    let titles = titles.lock().unwrap().to_owned();
+    println!("Before the saving \n {titles:?} \n  {data:?} \n The data lens are equal = {}", (data.len() == titles.len()));
     let stream = Stream {
         stream_id: proc_id.to_string(),
-        stream_data: data,
-        files: filenames,
+        title_row : titles,
+        batch_matrix: data
     };
 
     let _ = match menu::cache::set_stream(stream) {

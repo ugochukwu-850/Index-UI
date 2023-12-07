@@ -24,11 +24,14 @@ pub enum Action {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct  Stream {
     pub stream_id: String,
+    pub title_row: Vec<String>,
     /// key : Data Title . Values: v.0 - file index, v.1 cell data
-    pub stream_data : HashMap<String, Vec<(String, String)>>,
-    /// Key: File Index in batch @ batch number . Value : v.0 filename, v.1 filelastmodified
-    pub files: HashMap<String, (String, String)>
+    pub batch_matrix : Vec<Vec<String>>,
+    // Key: File Index in batch @ batch number . Value : v.0 filename, v.1 filelastmodified
+    //pub files: HashMap<String, (String, String)>
 }
+
+
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Process {
@@ -44,5 +47,62 @@ impl Process {
             proc_id: uuid::Uuid::new_v4().to_string(),
             data: HashMap::new(),
         }
+    }
+}
+
+
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum IndexError {
+    #[error("Rocket error: {0}")]
+    RocketError(#[from] rocket::Error),
+
+    #[error("Calamine error: {0}")]
+    CalamineError(#[from] calamine::Error),
+
+
+    #[error("Log error: {0}")]
+    LogError(#[from] log::SetLoggerError),
+
+    #[error("Serde error: {0}")]
+    SerdeError(#[from] serde_json::Error),
+
+    #[error("UUID error: {0}")]
+    UuidError(#[from] uuid::Error),
+
+    #[error("Redis error: {0}")]
+    RedisError(#[from] redis::RedisError),
+
+    #[error("Xlsxwriter error: {0}")]
+    XlsxwriterError(#[from] rust_xlsxwriter::XlsxError),
+
+    #[error("Shuttle runtime error: {0}")]
+    ShuttleRuntimeError(#[from] shuttle_runtime::Error),
+
+    #[error("File format error: {0}")]
+    FileFormatError(String),
+
+    #[error("No Match was found: {0}")]
+    NoMatchFound(String),
+
+    #[error("No Match was found: {0}")]
+    NotFound(String),
+}
+
+
+
+impl IndexError {
+    pub fn invalid_file_format<T: ToString>(msg: T) -> IndexError {
+        IndexError::FileFormatError(msg.to_string())
+    }
+
+    pub fn no_match_found<T: ToString>(msg: T) -> IndexError {
+        IndexError::NoMatchFound(msg.to_string())
+    }
+
+    /// Addresses anywhere option nones where returned
+    pub fn not_found<T: ToString>(msg: T) -> IndexError {
+        IndexError::NotFound(msg.to_string())
     }
 }

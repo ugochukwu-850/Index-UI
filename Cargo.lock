@@ -1574,7 +1574,6 @@ version = "0.1.0"
 dependencies = [
  "calamine",
  "env_logger",
- "futures-util",
  "log",
  "rayon",
  "redis",
@@ -1585,7 +1584,7 @@ dependencies = [
  "serde_json",
  "shuttle-rocket",
  "shuttle-runtime",
- "urlencoding",
+ "thiserror",
  "uuid",
  "zip",
 ]
