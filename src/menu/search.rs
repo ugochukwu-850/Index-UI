@@ -162,6 +162,7 @@ pub fn search_for_d(
 pub fn search_for_data_row(
     excel: &mut Sheets<std::io::BufReader<std::fs::File>>,
     query: HashSet<String>,
+    file_name: String 
 ) -> Result<(Vec<String> , Vec<Vec<String>>), IndexError> {
     if let Some(excel_workbook) = excel.worksheet_range(excel.sheet_names()[0].as_str()) {
         let excel_workbook = excel_workbook?;
@@ -181,7 +182,8 @@ pub fn search_for_data_row(
                 // only for the data grid ; The title is already gotten from the validation function
                 continue;
             }
-            let resulting_matrix = filter_rows(row, &query);
+            let slice = &titles[6..];
+            let resulting_matrix = filter_rows(row, &query, file_name.to_string());
             if let Some(res) = resulting_matrix {
                 // push the matrix to the main matrix page
                 matrix.extend(res)

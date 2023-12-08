@@ -1,5 +1,8 @@
 use std::collections::{HashSet, HashMap};
 
+use serde::{Deserialize, Serialize};
+use serde_json::json;
+
 use crate::menu::knubs::{cleanText, get_bacth_index_from_proc_id, generate_index};
 
 #[test]
@@ -79,7 +82,7 @@ fn test_main_x() {
     
     // with the vec set titles prepend the abitary infos
 
-    //  loop through every row as gotten from merge
+    // loop through every row as gotten from merge
 
     //  create an abitary number of cells as long as titles_Len + default cols
 
@@ -89,7 +92,7 @@ fn test_main_x() {
     // - index : enumerates index
     // - last revised: As given from row
     // - file index + index : DO the math
-    // - Data: as given
+    // - Data: As given
 
     // Now handle each column as a different enum variant as they would hold diff info
     // If the variant is among the above just threat accordingly 
@@ -108,4 +111,11 @@ fn test_main_x() {
     // example :
     // match cellO(celldata) => CellQuery{ format with this color}, CellSpecialblue => {format with designed color}
     
+}
+
+#[test]
+fn vec_slice()
+{
+    let c = vec![12; 30];
+    println!("{:?}", &c[6..].len());
 }

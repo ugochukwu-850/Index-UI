@@ -113,7 +113,7 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
                     if let Ok(mut excel) = open_workbook_auto(path) {
                         
                         if let Ok(file_matrix) =
-                            search::search_for_data_row(&mut excel, e.to_owned())
+                            search::search_for_data_row(&mut excel, e.to_owned(), f.raw_name().unwrap().dangerous_unsafe_unsanitized_raw().to_string())
                         {
                             println!("{:?}", file_matrix);
                             let mut data = data.lock().unwrap();

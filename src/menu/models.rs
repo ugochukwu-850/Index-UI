@@ -31,6 +31,17 @@ pub struct  Stream {
     //pub files: HashMap<String, (String, String)>
 }
 
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct Batch {
+    pub stream_id: String,
+    pub files: Vec<FileResult>
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct  FileResult {
+    pub titles: Vec<String>,
+    pub body_matrix: Vec<Vec<String>>
+}
 
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
