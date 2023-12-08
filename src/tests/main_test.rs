@@ -68,6 +68,7 @@ fn gen_titles() {
             clean_title_index_map.insert(cleanText(&title.to_string()), titles_vec_set.len() - 1);
         }
     }
+    
 
     println!("Clean Map: {:?} \n Vec Set: {:?}", clean_title_index_map, titles_vec_set);
 }

@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use rocket::{fs::TempFile, serde::json::Json};
+use rust_xlsxwriter::Format;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -22,27 +23,58 @@ pub enum Action {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct  Stream {
+pub struct Stream {
     pub stream_id: String,
     pub title_row: Vec<String>,
     /// key : Data Title . Values: v.0 - file index, v.1 cell data
-    pub batch_matrix : Vec<Vec<String>>,
+    pub batch_matrix: Vec<Vec<String>>,
     // Key: File Index in batch @ batch number . Value : v.0 filename, v.1 filelastmodified
     //pub files: HashMap<String, (String, String)>
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Batch {
-    pub stream_id: String,
-    pub files: Vec<FileResult>
+    pub batch_id: String,
+    pub file_results: Vec<FileResult>,
+    pub query: JsonQuery
 }
+
+impl JsonQuery {
+    // generates a format struct for all possible formats for 
+    // a query type
+    pub fn gen_format(&self) -> Vec<Format> {
+        match self {
+            JsonQuery::OnlyData(_) => {todo!()}
+            JsonQuery::TitleData(_) => todo!(),
+        }
+    }
+}
+
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct  FileResult {
+pub struct FileResult {
     pub titles: Vec<String>,
-    pub body_matrix: Vec<Vec<String>>
+    pub body_matrix: Vec<Vec<String>>,
 }
 
+impl FileResult {
+    pub fn new() -> Self {
+        Self {
+            titles: Vec::new(),
+            body_matrix: Vec::new(),
+        }
+    }
+}
+
+impl Batch {
+    pub fn new(batch_id: String, query: JsonQuery) -> Self {
+        Self {
+            batch_id,
+            file_results: Vec::new(),
+            query,
+        }
+    }
+}
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Process {
@@ -61,7 +93,6 @@ impl Process {
     }
 }
 
-
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -71,7 +102,6 @@ pub enum IndexError {
 
     #[error("Calamine error: {0}")]
     CalamineError(#[from] calamine::Error),
-
 
     #[error("Log error: {0}")]
     LogError(#[from] log::SetLoggerError),
@@ -100,8 +130,6 @@ pub enum IndexError {
     #[error("No Match was found: {0}")]
     NotFound(String),
 }
-
-
 
 impl IndexError {
     pub fn invalid_file_format<T: ToString>(msg: T) -> IndexError {

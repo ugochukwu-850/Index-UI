@@ -2,7 +2,7 @@ use crate::Process;
 
 use redis::{Commands, Connection, ErrorKind, RedisError, RedisResult};
 
-use super::models::Stream;
+use super::models::{Stream, Batch};
 
 // This module is still in build and would be optimized alot.
 pub fn connection() -> RedisResult<Connection> {
@@ -45,7 +45,7 @@ pub fn set_process(pr: Process) -> RedisResult<()> {
     Ok(x)
 }
 
-pub fn set_stream(pr: Stream) -> RedisResult<()> {
+pub fn set_stream(pr: Batch) -> RedisResult<()> {
     let mut con = connection()?;
     let value = match serde_json::to_value(&pr) {
         Ok(e) => e.to_string(),
@@ -57,14 +57,14 @@ pub fn set_stream(pr: Stream) -> RedisResult<()> {
             )))
         }
     };
-    let x = con.set_ex(&pr.stream_id, &value, 60 * 60)?;
+    let x = con.set_ex(&pr.batch_id, &value, 60 * 60)?;
     Ok(x)
 }
 
-pub fn get_stream(id: &String) -> RedisResult<Stream> {
+pub fn get_batch(id: &String) -> RedisResult<Batch> {
     let mut con = connection()?;
     let pro_str: String = con.get(id)?;
-    let binding: Result<Stream, serde_json::Error> = serde_json::from_str(&pro_str);
+    let binding: Result<Batch, serde_json::Error> = serde_json::from_str(&pro_str);
     match binding {
         Ok(e) => Ok(e),
         Err(_e) => Err(RedisError::from((

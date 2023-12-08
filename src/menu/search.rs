@@ -157,8 +157,8 @@ pub fn search_for_d(
 }
 
 /// using the new adjusted algorithm
-/// This function aims to return a matrix of result for a particular file
-
+/// This function aims to return a matrix of result for a particular file <br>
+/// Returns for a particular given file the (titles, matrix of body rows);
 pub fn search_for_data_row(
     excel: &mut Sheets<std::io::BufReader<std::fs::File>>,
     query: HashSet<String>,
