@@ -28,6 +28,7 @@ use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::env::temp_dir;
+use std::fmt::format;
 use std::sync::Arc;
 use std::sync::Mutex;
 use zip::DateTime;
@@ -38,6 +39,7 @@ use rocket::{form::Form, serde::json::Json};
 
 use crate::menu::excel::new_excel_file;
 use crate::menu::excel::new_excel_file_t;
+use crate::menu::knubs::file_index_gen;
 use crate::menu::knubs::generate_index;
 use crate::menu::knubs::get_bacth_index_from_proc_id;
 use crate::menu::knubs::merge_titles;
@@ -71,6 +73,7 @@ fn download(process_id: String) -> Vec<u8> {
     // loop through all the files and on failure just return
     let mut batch_index = 0;
     let mut titles_map: HashMap<String, usize> = HashMap::new();
+    let mut file_index_map: HashMap<String, usize> = HashMap::new();
     let mut workbook = Workbook::new();
     let current_sheet = workbook.add_worksheet();
     let mut current_row = 1;
@@ -99,14 +102,22 @@ fn download(process_id: String) -> Vec<u8> {
                         Ok(e) => e,
                         Err(_) => return,
                     };
-
+                // println!("\n\n\n Title Index Map: {title_index_map:?}");
                 // now process each file row
 
                 for row in body_matrix {
+                    // set the row index and file index variable 
+                    let file_index = file_index_gen(&mut file_index_map, &row[4]);
+                    let serial_file_index = format!("{}-{}", file_index, current_row);
+                    let arb = vec![file_index.to_string(), current_row.to_string(), serial_file_index];
                     // write each value based on its formatting
                     // for now : No formatting
-                    for (index, cell) in row.into_iter().enumerate() {
-                        _ = current_sheet.write(current_row, title_index_map[index] as u16, cell);
+                    // println!("Each row: {row:?}");
+                    for (index, mut cell) in row.into_iter().enumerate() {
+                        if (1..=3).contains(&index) {
+                            cell = arb[index-1].to_owned();
+                        }
+                        _ = current_sheet.write(current_row as u32, title_index_map[index] as u16, cell);
                     }
 
                     current_row += 1;
@@ -117,6 +128,7 @@ fn download(process_id: String) -> Vec<u8> {
         batch_index += 1;
         _ = key_ex(&batch_id, EXPIRES)
     }
+    current_sheet.autofit();
     workbook.save_to_buffer().unwrap().to_vec()
     
 }
@@ -150,14 +162,11 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
                             match search::search_for_data_row(
                                 &mut excel,
                                 e.to_owned(),
-                                f.raw_name()
-                                    .unwrap()
-                                    .dangerous_unsafe_unsanitized_raw()
-                                    .to_string(),
+                                f.name().unwrap().to_string()
                             ) {
                                 // if the search was successful
                                 Ok(file_matrix) => {
-                                    println!("Gotten files => Len == {:?}", file_matrix.0.len());
+                                    // println!("Gotten files => Len == {:?}", file_matrix.0.len());
 
                                     // create a fileresult instance
                                     let file_result = FileResult {

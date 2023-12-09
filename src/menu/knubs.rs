@@ -23,36 +23,32 @@ pub fn generate_index(batch_index: usize, index: usize) -> String {
 /// If they pass it returns the titles
 pub fn validity(excel: &Range<DataType>) -> Option<Vec<String>> {
     // No empty first row
-    for (index, row) in excel.rows().enumerate() {
-        // if the title cell is empty : Past first row break
-        if index > 0 {
-            break;
-        }
-        let mut titles: Vec<String> = vec![
-            "Filename",
-            "File last Revised",
-            "Serial Number",
-            "File Index",
-            "file Index + Serial Number",
-            "Data",
-        ]
-        .into_iter()
-        .map(|f| f.to_string())
-        .collect();
+    let mut titles: Vec<String> = vec![
+        "File Last Revised Date",
+        "File Number",
+        "Serial Number",
+        "File Number - Serial Number",
+        "Filename",
+        "Data",
+    ]
+    .into_iter()
+    .map(|f| f.to_string())
+    .collect();
+
+    for cell in excel.rows().next()? {
 
         // if update the titles row
-        for cell in row {
-            if cell.is_empty() {
-                return None;
-            }
-            titles.push(cell.to_string());
+        if cell.is_empty() {
+            return None;
         }
+        titles.push(cell.to_string());
 
-        // return the titles
-        return Some(titles);
     }
+    if titles.len() < 6 {
+        return None
+    }
+    return Some(titles);
 
-    None
 }
 
 /// Creates N amount of row instances each time a query Data is found
@@ -60,7 +56,7 @@ pub fn validity(excel: &Range<DataType>) -> Option<Vec<String>> {
 /// Examples
 /// ```rust
 /// let example_response = vec!["name_of_query_found_in_row", "remaining row data"];
-/// println!("This would be an example of a response");
+/// // println!("This would be an example of a response");
 /// ```
 pub fn filter_rows(
     row: &[DataType],
@@ -68,19 +64,28 @@ pub fn filter_rows(
     file_name: String,
 ) -> Option<Vec<Vec<String>>> {
     // if the row has any of the query then create a row instance with the row
-    let rows: Vec<String> = row.iter().map(|d| cleanText(&d.to_string())).collect();
+    let mut check = HashSet::new();
+    let rows: Vec<String> = row
+        .iter()
+        .map(|d| {
+            let d = d.to_string();
+            let r = cleanText(&d);
+            check.insert(r.to_owned());
+            r
+        })
+        .collect();
     let mut gotten_row_matches = Vec::new();
 
     for data in query {
-        println!("Data searching for {data}");
-        if rows.contains(data) {
+        // println!("Data searching for {data}");
+        if check.contains(data) {
             let mut new_row: Vec<String> = vec![
+                "12/12/2023  10:05:00 PM",
+                "Unknown",
+                "Unknown",
+                "Unknown",
                 &file_name,
-                "last_revised_just_now",
-                "Unknown",
-                "Unknown",
-                "Unknown",
-                "Data",
+                data,
             ]
             .into_iter()
             .map(|f| f.to_string())
@@ -88,7 +93,7 @@ pub fn filter_rows(
             new_row.extend(rows.clone());
             gotten_row_matches.push(new_row);
 
-            println!("Just pushed a new row")
+            // println!("Just pushed a new row")
         }
     }
     if gotten_row_matches.len() > 0 {
@@ -118,9 +123,9 @@ pub fn merge_titles(
             }
             titles_index.push(title_index);
             title_map.insert(cleanText(&title.to_string()), title_index);
+        } else {
+            titles_index.push(title_map.get(&cleanText(&title)).unwrap().to_owned());
         }
-
-        titles_index.push(title_map.get(&cleanText(&title)).unwrap().to_owned());
     }
 
     Ok(titles_index)
@@ -129,4 +134,15 @@ pub fn merge_titles(
 #[allow(unused)]
 pub fn is_query(queries: &HashSet<String>, cell: String) -> bool {
     queries.contains(&cell)
+}
+
+pub fn file_index_gen(fileindex_map: &mut HashMap<String, usize>, filename: &String) -> usize {
+    // if file in map return its index else return maps len
+    if let Some(ind) = fileindex_map.get(filename) {
+        ind.to_owned()
+    } else {
+        let ind = fileindex_map.len() + 1;
+        fileindex_map.insert(filename.to_owned(), ind);
+        ind
+    }
 }

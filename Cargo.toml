@@ -21,5 +21,6 @@ rust_xlsxwriter = { version = "0.56.0", features = ["chrono"] }
 shuttle-rocket = "0.34.1"
 shuttle-runtime = "0.34.1"
 thiserror = "1.0.50"
+chrono = { version = "0.4.31", features = ["serde"] }
 
 

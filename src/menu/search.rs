@@ -173,7 +173,7 @@ pub fn search_for_data_row(
             return Err(IndexError::invalid_file_format("Invalid file , the row had an empty column"));
         }
         titles = val.unwrap();
-        println!("Titles before being sent to database {:?}", titles);
+        //println!("Titles before being sent to database {:?}", titles);
         let mut matrix = Vec::new();
         // search for all the rows that match the data variable and create its entire row 
         // with the filedata and append to the main list
@@ -182,7 +182,6 @@ pub fn search_for_data_row(
                 // only for the data grid ; The title is already gotten from the validation function
                 continue;
             }
-            let slice = &titles[6..];
             let resulting_matrix = filter_rows(row, &query, file_name.to_string());
             if let Some(res) = resulting_matrix {
                 // push the matrix to the main matrix page
@@ -190,7 +189,7 @@ pub fn search_for_data_row(
             }
         }
 
-        println!("Titles : {:?} Body {:?}", titles, matrix);
+        //println!("Titles : {:?} Body {:?}", titles, matrix);
 
         return Ok((titles, matrix)) ;
     }
