@@ -1,9 +1,11 @@
 use std::collections::{HashMap, HashSet};
 
 use calamine::{DataType, Range};
-use rust_xlsxwriter::{Format, Worksheet};
+use chrono::format::StrftimeItems;
+use rocket::{fs::FileName, form::{self, Form}, serde::json::Json};
+use rust_xlsxwriter::{Format, Worksheet, Color};
 
-use super::models::IndexError;
+use super::models::{IndexError, JsonQuery};
 
 pub fn cleanText(text: &String) -> String {
     let result: String = text.chars().filter(|c| !c.is_whitespace()).collect();
@@ -36,19 +38,16 @@ pub fn validity(excel: &Range<DataType>) -> Option<Vec<String>> {
     .collect();
 
     for cell in excel.rows().next()? {
-
         // if update the titles row
         if cell.is_empty() {
             return None;
         }
         titles.push(cell.to_string());
-
     }
     if titles.len() < 6 {
-        return None
+        return None;
     }
     return Some(titles);
-
 }
 
 /// Creates N amount of row instances each time a query Data is found
@@ -62,6 +61,7 @@ pub fn filter_rows(
     row: &[DataType],
     query: &HashSet<String>,
     file_name: String,
+    index: usize,
 ) -> Option<Vec<Vec<String>>> {
     // if the row has any of the query then create a row instance with the row
     let mut check = HashSet::new();
@@ -80,7 +80,7 @@ pub fn filter_rows(
         // println!("Data searching for {data}");
         if check.contains(data) {
             let mut new_row: Vec<String> = vec![
-                "12/12/2023  10:05:00 PM",
+                &get_time(),
                 "Unknown",
                 "Unknown",
                 "Unknown",
@@ -91,6 +91,7 @@ pub fn filter_rows(
             .map(|f| f.to_string())
             .collect();
             new_row.extend(rows.clone());
+            new_row.push(index.to_string());
             gotten_row_matches.push(new_row);
 
             // println!("Just pushed a new row")
@@ -109,11 +110,13 @@ pub fn merge_titles(
     titles: Vec<String>,
     title_map: &mut HashMap<String, usize>,
     cursor: &mut Worksheet,
-    format: Option<Format>,
+    query_type: &JsonQuery
 ) -> Result<Vec<usize>, IndexError> {
     let mut titles_index = Vec::new();
-    for title in titles {
+    for (index, title) in titles.into_iter().enumerate() {
         if !title_map.contains_key(&cleanText(&title.to_string())) {
+            let format = Some(gen_format(query_type, index, 0));
+
             let title_index = title_map.len();
             // write cell data to the row
             if let Some(ref f) = format {
@@ -146,3 +149,51 @@ pub fn file_index_gen(fileindex_map: &mut HashMap<String, usize>, filename: &Str
         ind
     }
 }
+
+pub fn get_time() -> String {
+    let now = chrono::Utc::now().naive_local();
+    let fmt = StrftimeItems::new("%Y-%m-%d %H:%M:%S");
+    now.format_with_items(fmt).to_string()
+}
+
+pub fn get_file_trail(filename: Option<&FileName>) -> String {
+    // check if the filename is safe
+    match filename {
+        Some(filename) => {
+            let x_f = filename.dangerous_unsafe_unsanitized_raw();
+            let extension = x_f.split(".").last().unwrap().as_str();
+
+            format!("{}.{}", filename.as_str().unwrap(), extension)
+        }
+        None => String::from("Dangerous Or Missing filename.xlsx"),
+    }
+}
+
+pub fn gen_format(search_type: &JsonQuery, cell_index: usize, row_index: usize) -> Format {
+    let mut format = Format::new();
+    
+
+    match search_type {
+        JsonQuery::TitleData(_) => {
+            format
+        }
+        JsonQuery::OnlyData(_) => {
+            // if this is the first row
+
+            if row_index == 0 {
+                if cell_index == 5 {
+                    format = format.set_background_color(Color::Cyan)
+                }
+               return format.set_bold().set_font_size(12);
+            }
+            if cell_index == 5 {
+                return format.set_bold().set_background_color(Color::Pink).set_font_size(12);
+            }
+            format
+        }
+    }
+}
+
+// fn to get the name of a file with its extension
+// also figure out if the time is the time the file was processed or the time the reult was created
+// or the files last modified date as a file

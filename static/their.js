@@ -229,7 +229,9 @@ function mergeAndDownload() {
         const year = today.getFullYear();
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const day = String(today.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+        const hour = String(today.getHours()).padStart(2, '0');
+        const minute = String(today.getMinutes()).padStart(2, '0');
+        return `${month}${day}${year}${hour}${minute}`;
     }
 
     // Utility function to generate a unique sheet name in the workbook

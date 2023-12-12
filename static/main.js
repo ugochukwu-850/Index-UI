@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function () {
         downloadButton.removeAttribute("disabled");
         linkDownloadButton.href = `/download/${proc_id}`;
         linkDownloadButton.removeAttribute("hidden");
-        linkDownloadButton.download = `Search_Result.${proc_id}.xlsx`;
+        linkDownloadButton.download = `${getQueryString(0)}-index${getTodayDate()}.xlsx`;
         // change to file save later
         linkDownloadButton.click();
 
@@ -425,4 +425,25 @@ async function handleZipFile(zips) {
 
     alert(`Processed ${processedFiles.length} files from ${zips.length} zip files`);
     return processedFiles;
+}
+
+
+function getTodayDate() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const hour = String(today.getHours()).padStart(2, '0');
+    const minute = String(today.getMinutes()).padStart(2, '0');
+    return `${month}${day}${year}${hour}${minute}`;
+}
+
+
+function getQueryString(query) {
+   if (queryType == 0) {
+    // handle as query + data search
+    
+   }
+
+   return "SSDCPU";
 }

@@ -3,7 +3,7 @@ use std::collections::{HashSet, HashMap};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use crate::menu::knubs::{cleanText, get_bacth_index_from_proc_id, generate_index};
+use crate::menu::knubs::{cleanText, get_bacth_index_from_proc_id, generate_index, get_time};
 
 #[test]
 fn testclean_text() {
@@ -119,4 +119,12 @@ fn vec_slice()
 {
     let c = vec![12; 30];
     println!("{:?}", &c[6..].len());
+}
+
+
+#[test]
+fn test_date() {
+    let t = get_time();
+    println!("{t}");
+    assert!(Some(t).is_some())
 }

@@ -40,8 +40,10 @@ use rocket::{form::Form, serde::json::Json};
 use crate::menu::excel::new_excel_file;
 use crate::menu::excel::new_excel_file_t;
 use crate::menu::knubs::file_index_gen;
+use crate::menu::knubs::gen_format;
 use crate::menu::knubs::generate_index;
 use crate::menu::knubs::get_bacth_index_from_proc_id;
+use crate::menu::knubs::get_file_trail;
 use crate::menu::knubs::merge_titles;
 
 #[launch]
@@ -77,6 +79,7 @@ fn download(process_id: String) -> Vec<u8> {
     let mut workbook = Workbook::new();
     let current_sheet = workbook.add_worksheet();
     let mut current_row = 1;
+    // the file + number is going to be files number and then the index of the amount of files found in it 
     // let current format: Format;
     while let Ok(Batch {
         batch_id,
@@ -85,7 +88,7 @@ fn download(process_id: String) -> Vec<u8> {
     }) = get_batch(&format!("{}@{}", process_id, batch_index))
     {
         let mut search_data = HashSet::new();
-        if let JsonQuery::TitleData(e) = query {
+        if let JsonQuery::TitleData(e) = query.to_owned() {
             e.into_values().for_each(|f| search_data.extend(f));
         }
 
@@ -98,18 +101,20 @@ fn download(process_id: String) -> Vec<u8> {
              }| {
                 // process the title
                 let title_index_map =
-                    match merge_titles(titles, &mut titles_map, current_sheet, None) {
+                    match merge_titles(titles, &mut titles_map, current_sheet, &query) {
                         Ok(e) => e,
                         Err(_) => return,
                     };
                 // println!("\n\n\n Title Index Map: {title_index_map:?}");
                 // now process each file row
 
-                for row in body_matrix {
+                for mut row in body_matrix {
                     // set the row index and file index variable 
+                    let file_map_match_index = row.pop().unwrap();
                     let file_index = file_index_gen(&mut file_index_map, &row[4]);
-                    let serial_file_index = format!("{}-{}", file_index, current_row);
+                    let serial_file_index = format!("{}-{}", file_index, file_map_match_index);
                     let arb = vec![file_index.to_string(), current_row.to_string(), serial_file_index];
+                    //let query = &query.to_owned();
                     // write each value based on its formatting
                     // for now : No formatting
                     // println!("Each row: {row:?}");
@@ -117,7 +122,8 @@ fn download(process_id: String) -> Vec<u8> {
                         if (1..=3).contains(&index) {
                             cell = arb[index-1].to_owned();
                         }
-                        _ = current_sheet.write(current_row as u32, title_index_map[index] as u16, cell);
+                        let format = gen_format(&query, index, current_row);
+                        _ = current_sheet.write_with_format(current_row as u32, title_index_map[index] as u16, cell, &format);
                     }
 
                     current_row += 1;
@@ -162,7 +168,7 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
                             match search::search_for_data_row(
                                 &mut excel,
                                 e.to_owned(),
-                                f.name().unwrap().to_string()
+                                get_file_trail(f.raw_name())
                             ) {
                                 // if the search was successful
                                 Ok(file_matrix) => {
@@ -177,6 +183,7 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
                                     // update the batch struct with the file result
                                     let mut batch = batch.lock().unwrap();
                                     batch.file_results.push(file_result);
+
                                 }
 
                                 // log an error with the filename and the error reason

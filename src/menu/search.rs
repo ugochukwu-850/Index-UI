@@ -182,7 +182,7 @@ pub fn search_for_data_row(
                 // only for the data grid ; The title is already gotten from the validation function
                 continue;
             }
-            let resulting_matrix = filter_rows(row, &query, file_name.to_string());
+            let resulting_matrix = filter_rows(row, &query, file_name.to_string(), index);
             if let Some(res) = resulting_matrix {
                 // push the matrix to the main matrix page
                 matrix.extend(res)
