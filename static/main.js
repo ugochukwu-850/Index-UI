@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // fileArray.value = JSON.stringify({});
     document.querySelectorAll('.upload-btn-files').forEach(handler => {
         handler.addEventListener('change', async function (e) {
-            handleUploadFileS(e);
+            return await handleUploadFileS(e);
         });
     });
 
