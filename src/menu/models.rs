@@ -118,9 +118,6 @@ pub enum IndexError {
     #[error("Xlsxwriter error: {0}")]
     XlsxwriterError(#[from] rust_xlsxwriter::XlsxError),
 
-    #[error("Shuttle runtime error: {0}")]
-    ShuttleRuntimeError(#[from] shuttle_runtime::Error),
-
     #[error("File format error: {0}")]
     FileFormatError(String),
 

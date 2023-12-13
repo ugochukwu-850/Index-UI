@@ -15,11 +15,9 @@ serde = { version = "1.0.193", features = ["derive"] }
 uuid = { version = "1.6.1", features = ["v4"] }
 rayon = "1.8.0"
 serde_json = "1.0.108"
-redis = { version = "0.24.0", features = ["tokio-native-tls-comp"] }
+redis = { version = "0.24.0" }
 zip = "0.6.6"
 rust_xlsxwriter = { version = "0.56.0", features = ["chrono"] }
-shuttle-rocket = "0.34.1"
-shuttle-runtime = "0.34.1"
 thiserror = "1.0.50"
 chrono = { version = "0.4.31", features = ["serde"] }
 

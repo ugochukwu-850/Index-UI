@@ -2,14 +2,20 @@ use crate::Process;
 
 use redis::{Commands, Connection, ErrorKind, RedisError, RedisResult};
 
-use super::models::{Stream, Batch};
+use super::models::Batch;
 
 // This module is still in build and would be optimized alot.
-pub fn connection() -> RedisResult<Connection> {
-    let redis_port = std::env::var("REDIS_PORT").unwrap_or_else(|_| "6379".to_string());
-    // Create a connection to Redis using the fetched port
-    let redis_url = format!("redis://127.0.0.1:{}/", redis_port);
-   // let redis_url = "rediss://red-ckt7ltg168ec738dodcg:xIEJbECEzPI6xaVZWYMHi90OSS2jliN2@oregon-redis.render.com:6379";
+pub fn connection() -> RedisResult<Connection> {    
+    std::env::set_var("REDIS_URL", "redis://red-ckt7ltg168ec738dodcg:6379");
+    let redis_url = match std::env::var("REDIS_URL") {
+        Ok(e) => e,
+        Err(_) => {
+            let redis_port = std::env::var("REDIS_PORT").unwrap_or_else(|_| "6379".to_string());
+            // Create a connection to Redis using the fetched port
+            format!("redis://127.0.0.1:{}/", redis_port)
+        }
+    };
+
     let client = redis::Client::open(redis_url)?;
     let connection = client.get_connection()?;
     Ok(connection)
@@ -75,8 +81,6 @@ pub fn get_batch(id: &String) -> RedisResult<Batch> {
     }
 }
 
-
-
 pub fn key_exists(key: &String) -> RedisResult<bool> {
     let mut con = connection()?;
     let ex: Result<bool, RedisError> = con.exists(key);
@@ -102,6 +106,3 @@ pub fn key_ex(key: &String, time: usize) -> RedisResult<()> {
 
     Ok(())
 }
-
-
-
