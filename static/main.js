@@ -69,17 +69,17 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log(response);
 
             // handle end of request
-            handleEndOfRequest(proc_id)
+            handleEndOfRequest(proc_id, queries)
         }).catch(e => console.log("An error occured while performing operation", e));
         console.log(`Finished in ${new Date() - started} milliseconds`);
     })
 
 
-    function handleEndOfRequest(proc_id) {
+    function handleEndOfRequest(proc_id, query) {
         downloadButton.removeAttribute("disabled");
         linkDownloadButton.href = `/download/${proc_id}`;
         linkDownloadButton.removeAttribute("hidden");
-        linkDownloadButton.download = `${getQueryString(0)}-index${getTodayDate()}.xlsx`;
+        linkDownloadButton.download = `${getQueryString(query)}-index${getTodayDate()}.xlsx`;
         // change to file save later
         linkDownloadButton.click();
 
@@ -294,7 +294,7 @@ function batchFile() {
             return null;
         }
 
-        if (active_list_len < 100000000 /*kilobyte 100mb*/ && current_list.length < 5000) {
+        if (active_list_len < 100000000 /*kilobyte 100mb*/ && current_list.length < 2000) {
             current_list.push(filelist[index])
             active_list_len = active_list_len + filelist[index].size;
 
@@ -350,6 +350,7 @@ function comileListOfForms(proc_id, query) {
 
 async function CompileFiles(listOfForms, MAX_PARALLEL_REQUESTS) {
     let requestQ = [];
+    let all_req_res = [];
 
     for (let i = 0; i < listOfForms.length; i++) {
         const formData = listOfForms[i];
@@ -377,6 +378,7 @@ async function CompileFiles(listOfForms, MAX_PARALLEL_REQUESTS) {
         }
 
         requestQ.push(requestPromise);
+        all_req_res.push(requestPromise);
 
         if (requestQ.length >= MAX_PARALLEL_REQUESTS) {
             // Wait for all requests in the current batch to complete
@@ -386,7 +388,7 @@ async function CompileFiles(listOfForms, MAX_PARALLEL_REQUESTS) {
     }
 
     // Wait for any remaining requests to complete
-    return Promise.all(requestQ);
+    return Promise.all(all_req_res);
 };
 
 // utility function to help clean search queries
@@ -439,11 +441,27 @@ function getTodayDate() {
 }
 
 
-function getQueryString(query) {
-   if (queryType == 0) {
-    // handle as query + data search
+function getQueryString(parsedQueries)  {
+        if (!parsedQueries) {
+            return null;
+        }
     
-   }
-
-   return "SSDCPU";
-}
+        if (parsedQueries["OnlyData"]) {
+            return parsedQueries["OnlyData"][0] || null;
+        } else if (parsedQueries["TitleData"]) {
+            const titleKeys = Object.keys(parsedQueries["TitleData"]);
+            if (titleKeys.length > 0) {
+                const firstTitleKey = titleKeys[0];
+                const firstTitleData = parsedQueries["TitleData"][firstTitleKey];
+                return firstTitleData && firstTitleData.length > 0 ? firstTitleData[0] : null;
+            }
+        }
+    
+        return null;
+    }
+    
+    // Example usage:
+    const parsedQueries = parseQueries();
+    const firstQueryKey = getFirstQueryKey(parsedQueries);
+    console.log(firstQueryKey);
+    
