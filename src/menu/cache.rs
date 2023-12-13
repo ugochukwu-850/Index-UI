@@ -6,7 +6,6 @@ use super::models::Batch;
 
 // This module is still in build and would be optimized alot.
 pub fn connection() -> RedisResult<Connection> {    
-    std::env::set_var("REDIS_URL", "redis://red-ckt7ltg168ec738dodcg:6379");
     let redis_url = match std::env::var("REDIS_URL") {
         Ok(e) => e,
         Err(_) => {
