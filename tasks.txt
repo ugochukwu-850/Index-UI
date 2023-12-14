@@ -13,3 +13,4 @@ Waiting Taks
 ++ = Actions = ++
 * fix web server to handle only stream instances not create process
 * Remove vercel 
+* Fixed error with buttons and restarted dev on linux
