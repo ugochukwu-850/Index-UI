@@ -208,6 +208,8 @@ pub fn get_time() -> String {
     now.format_with_items(fmt).to_string()
 }
 
+///
+/// 
 pub fn get_file_trail(filename: Option<&FileName>) -> String {
     // check if the filename is safe
     match filename {
