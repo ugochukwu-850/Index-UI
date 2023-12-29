@@ -4,7 +4,7 @@ use std::fs::File;
 use std::vec;
 
 use super::excel;
-use super::knubs::{cleanText, validity, filter_rows};
+use super::knubs::{cleanText, validity, filter_rows, filter_rows_1, validity_1};
 use super::models::IndexError;
 
 /// Performs title + data search on all `std::io::BufReader<std::fs::File>` file types
@@ -192,6 +192,49 @@ pub fn search_for_data_row(
         //println!("Titles : {:?} Body {:?}", titles, matrix);
 
         return Ok((titles, matrix)) ;
+    }
+    Err(IndexError::not_found("The workbook was not found...? Or Could not be opened"))
+}
+
+
+
+/// using the new adjusted algorithm
+/// This function aims to return a matrix of result for a particular file <br>
+/// Returns for a particular given file the (titles, matrix of body rows);
+pub fn search_for_data_row_1(
+    excel: &mut Sheets<std::io::BufReader<std::fs::File>>,
+    query: HashMap<String, HashSet<String>>,
+    file_name: String 
+) -> Result<(Vec<String> , Vec<Vec<String>>), IndexError> {
+    if let Some(excel_workbook) = excel.worksheet_range(excel.sheet_names()[0].as_str()) {
+        let excel_workbook = excel_workbook?;
+        
+        // check if file is valid and if not return non   
+        let val =  validity_1(&excel_workbook, query);
+        if val.is_none() {
+            return Err(IndexError::invalid_file_format("Invalid file , the row had an empty column"));
+        }
+        let (workbook_titles, r_query) = val.unwrap();
+        //println!("Titles before being sent to database {:?}", titles);
+
+        let mut matrix = Vec::new();
+        // search for all the rows that match the data variable and create its entire row 
+        // with the filedata and append to the main list
+        for (index, row) in excel_workbook.rows().enumerate() {
+            if index == 0 {
+                // only for the data grid ; The title is already gotten from the validation function
+                continue;
+            }
+            let resulting_matrix = filter_rows_1(row, &r_query, &excel_workbook,file_name.to_string(), index);
+            if let Some(res) = resulting_matrix {
+                // push the matrix to the main matrix page
+                matrix.extend(res)
+            }
+        }
+
+        //println!("Titles : {:?} Body {:?}", titles, matrix);
+
+        return Ok((workbook_titles, matrix)) ;
     }
     Err(IndexError::not_found("The workbook was not found...? Or Could not be opened"))
 }

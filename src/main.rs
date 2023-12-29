@@ -87,10 +87,7 @@ fn download(process_id: String) -> Vec<u8> {
         query,
     }) = get_batch(&format!("{}@{}", process_id, batch_index))
     {
-        let mut search_data = HashSet::new();
-        if let JsonQuery::TitleData(e) = query.to_owned() {
-            e.into_values().for_each(|f| search_data.extend(f));
-        }
+       
 
         // loop through every file processing its rows
 
@@ -206,7 +203,56 @@ async fn upload(upload: Form<Upload<'_>>) -> Json<Value> {
                 }
             });
         }
-        _ => {}
+        JsonQuery::TitleData(e) => {
+            let _ = files.into_par_iter().for_each(|f| {
+                // if file does even have a real path
+                if let Some(path) = f.path() {
+                    // if the file could be opened
+                    match open_workbook_auto(path) {
+                        // on success
+                        Ok(mut excel) => {
+                            // search for the info
+                            match search::search_for_data_row_1(
+                                &mut excel,
+                                e.to_owned(),
+                                get_file_trail(f.raw_name())
+                            ) {
+                                // if the search was successful
+                                Ok(file_matrix) => {
+                                    // println!("Gotten files => Len == {:?}", file_matrix.0.len());
+
+                                    // create a fileresult instance
+                                    let file_result = FileResult {
+                                        titles: file_matrix.0,
+                                        body_matrix: file_matrix.1,
+                                    };
+
+                                    // update the batch struct with the file result
+                                    let mut batch = batch.lock().unwrap();
+                                    batch.file_results.push(file_result);
+
+                                }
+
+                                // log an error with the filename and the error reason
+                                // clean error handling already provides a good log message
+                                Err(e) => {
+                                    let mut failed = failed_instances.lock().unwrap();
+                                    failed.push((f.name().unwrap(), e.to_string()))
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            let mut failed = failed_instances.lock().unwrap();
+                            failed.push((f.name().unwrap(), e.to_string()))
+                        }
+                    }
+                    // Add the file to failed instances
+                } else {
+                    let mut failed = failed_instances.lock().unwrap();
+                    failed.push((f.name().unwrap(), "failed to open path".to_string()))
+                }
+            });
+        }
     };
 
     let batch = batch.lock().unwrap().to_owned();
