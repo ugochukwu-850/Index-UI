@@ -1,4 +1,5 @@
 /target
 /assets
 /tmp
+.env
 /archive
