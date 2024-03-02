@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
+use chrono::{NaiveDate, Utc};
 use rocket::{fs::TempFile, serde::json::Json};
 use rust_xlsxwriter::Format;
 use serde::{Deserialize, Serialize};
@@ -36,20 +37,21 @@ pub struct Stream {
 pub struct Batch {
     pub batch_id: String,
     pub file_results: Vec<FileResult>,
-    pub query: JsonQuery
+    pub query: JsonQuery,
 }
 
 impl JsonQuery {
-    // generates a format struct for all possible formats for 
+    // generates a format struct for all possible formats for
     // a query type
     pub fn gen_format(&self) -> Vec<Format> {
         match self {
-            JsonQuery::OnlyData(_) => {todo!()}
+            JsonQuery::OnlyData(_) => {
+                todo!()
+            }
             JsonQuery::TitleData(_) => todo!(),
         }
     }
 }
-
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct FileResult {
@@ -140,5 +142,57 @@ impl IndexError {
     /// Addresses anywhere option nones where returned
     pub fn not_found<T: ToString>(msg: T) -> IndexError {
         IndexError::NotFound(msg.to_string())
+    }
+}
+
+// destino
+use crate::schema::destino_users;
+use diesel::prelude::*;
+
+
+#[derive(Debug, Clone, Serialize, PartialEq, Queryable, Deserialize, Insertable)]
+#[diesel(table_name = destino_users)]
+pub struct Duserreq {
+    // Specify the id column as the primary key
+    pub id: uuid::Uuid,
+    pub fullname: String,
+    pub email: String,
+    pub phone_number: i64, // Assuming you're using Diesel's Text type
+    pub joined: NaiveDate,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq, Deserialize)]
+pub struct DuserInst {
+    pub fullname: String,
+    pub email: String,
+    pub phone_number: i64, // Assuming you're using Diesel's Text type
+
+}
+
+impl Into<Duserreq> for DuserInst {
+    fn into(self) -> Duserreq {
+        // Call the method defined above to perform the conversion
+        let DuserInst { fullname, email, phone_number } = self;
+        Duserreq { id: uuid::Uuid::new_v4(), fullname, email, phone_number, joined: chrono::Utc::now().date_naive() }
+    }
+}
+
+impl Duserreq {
+    fn verify_email(email: &String) -> bool {
+        use regex::Regex;
+        // Define the regex pattern for email validation
+        let re = Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").unwrap();
+    
+        // Check if the email matches the regex pattern
+        re.is_match(email)
+    }
+
+    pub fn validate_and_save(&mut self) -> Option<Self> {
+        self.id = uuid::Uuid::new_v4();
+        self.joined = chrono::Utc::now().date_naive();
+        if self.phone_number.to_string().len() < 9 || !Self::verify_email(&self.email) || self.fullname.len() < 4{
+            return None;
+        }
+       Some( crate::menu::db::cursor::create_d_user(self))
     }
 }

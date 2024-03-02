@@ -1,6 +1,6 @@
 ## defaults for _all_ profiles
 [default]
-address = "0.0.0.0"
+address = "127.0.0.1"
 limits = { form = "64 kB", json = "1 MiB" }
 
 ## set only when compiled in debug mode, i.e, `cargo build`

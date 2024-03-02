@@ -4,3 +4,4 @@ pub mod models;
 pub mod zip;
 pub mod knubs;
 pub mod excel;
+pub mod db;
