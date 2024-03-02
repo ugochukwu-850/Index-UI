@@ -315,7 +315,7 @@ async fn handle_destino(user: Json<DuserInst>) -> Result<Vec<u8>, rocket::http::
         return Err(Status::BadRequest);
     }
     use rocket::tokio::fs::read_to_string;
-    let book = read_to_string(relative!("static/main.css")).await;
+    let book = read_to_string(relative!("static/dsl.pdf")).await;
     if let Err(_) = book {
         return Err(Status::InternalServerError);
     }
